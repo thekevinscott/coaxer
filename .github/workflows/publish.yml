@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -107,6 +108,21 @@ jobs:
       - name: Build package
         if: steps.tag.outputs.created == 'true'
         run: uv build
+
+      - name: Publish to PyPI
+        if: steps.tag.outputs.created == 'true'
+        run: |
+          for attempt in 1 2 3; do
+            echo "Publish attempt $attempt of 3"
+            if uv publish --trusted-publishing always; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Retrying in 15 seconds..."
+              sleep 15
+            fi
+          done
+          exit 1
 
       - name: Rollback tag on failure
         if: failure() && steps.tag.outputs.created == 'true'

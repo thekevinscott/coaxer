@@ -10,3 +10,4 @@ jobs:
       bump_type: minor
     permissions:
       contents: write
+      id-token: write
