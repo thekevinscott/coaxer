@@ -239,6 +239,78 @@ class TestMultiFieldDataModel:
         assert result["examples"][2].get("language") is None
 
 
+class TestReasoningInterleave:
+    """Reasoning fields should appear inline with their label fields in detail."""
+
+    @pytest.fixture
+    def reasoning_input(self, tmp_path: Path) -> Path:
+        data = {
+            "label_fields": [
+                {"name": "includes_what", "labels": ["true", "false"]},
+                {"name": "includes_when", "labels": ["true", "false"]},
+            ],
+            "display_fields": [
+                "url",
+                "description",
+                "includes_what_reasoning",
+                "includes_when_reasoning",
+            ],
+            "examples": [
+                {
+                    "url": "https://example.com",
+                    "description": "A daily notes skill",
+                    "includes_what_reasoning": "YES: states what it does",
+                    "includes_when_reasoning": "YES: gives trigger",
+                    "includes_what": "true",
+                    "includes_when": "true",
+                },
+            ],
+        }
+        p = tmp_path / "reasoning.json"
+        p.write_text(json.dumps(data))
+        return p
+
+    async def test_reasoning_shown_after_label(
+        self, reasoning_input: Path, output_path: Path,
+    ):
+        """Reasoning display fields should appear right after their label."""
+        app = LabelApp(input_path=reasoning_input, output_path=output_path)
+        async with app.run_test():
+            from textual.widgets import Static
+
+            detail = app.query_one("#detail", Static)
+            rendered = str(detail.render())
+            # The order should be:
+            # url, description (non-reasoning display fields)
+            # includes_what: true
+            #   includes_what_reasoning: YES: states what it does
+            # includes_when: true
+            #   includes_when_reasoning: YES: gives trigger
+            what_pos = rendered.find("includes_what:")
+            what_reason_pos = rendered.find("includes_what_reasoning:")
+            when_pos = rendered.find("includes_when:")
+            when_reason_pos = rendered.find("includes_when_reasoning:")
+
+            # Reasoning should come right after its label, before next label
+            assert what_pos < what_reason_pos < when_pos
+            assert when_pos < when_reason_pos
+
+    async def test_non_reasoning_display_fields_shown_first(
+        self, reasoning_input: Path, output_path: Path,
+    ):
+        """Non-reasoning display fields (url, description) come before labels."""
+        app = LabelApp(input_path=reasoning_input, output_path=output_path)
+        async with app.run_test():
+            from textual.widgets import Static
+
+            detail = app.query_one("#detail", Static)
+            rendered = str(detail.render())
+            url_pos = rendered.find("url:")
+            desc_pos = rendered.find("description:")
+            what_pos = rendered.find("includes_what:")
+            assert url_pos < desc_pos < what_pos
+
+
 class TestClickableUrls:
     """URL values in display fields should be rendered as clickable links."""
 

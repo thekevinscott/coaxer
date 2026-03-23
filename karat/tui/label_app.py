@@ -141,6 +141,18 @@ class LabelApp(App):
             self.examples, self.label_fields, output_path,
         )
 
+        # Detect reasoning fields (shown in detail panel, not table)
+        label_names = {f["name"] for f in self.label_fields}
+        self._reasoning_map: dict[str, str] = {}
+        for df in self.display_fields:
+            for lname in label_names:
+                if df in (f"{lname}_reasoning", f"{lname}_reason"):
+                    self._reasoning_map[lname] = df
+        self._reasoning_fields = set(self._reasoning_map.values())
+        self._table_display_fields = [
+            f for f in self.display_fields if f not in self._reasoning_fields
+        ]
+
         if self._use_number_keys:
             for i, label in enumerate(self.labels):
                 key = str(i + 1)
@@ -165,7 +177,7 @@ class LabelApp(App):
         self.query_one("#search-panel").display = False
         table = self.query_one("#table", DataTable)
         table.add_column("#", key="idx")
-        for field in self.display_fields:
+        for field in self._table_display_fields:
             table.add_column(field, key=field)
         if len(self.label_fields) == 1:
             table.add_column("Label", key="label")
@@ -175,7 +187,7 @@ class LabelApp(App):
 
         for i, ex in enumerate(self.examples):
             row = [str(i + 1)]
-            for field in self.display_fields:
+            for field in self._table_display_fields:
                 val = str(ex.get(field, ""))
                 row.append(_make_cell_value(val))
             if len(self.label_fields) == 1:
@@ -228,14 +240,27 @@ class LabelApp(App):
         ):
             ex = self.examples[table.cursor_row]
             lines = []
+
+            # Non-reasoning display fields first
             for field in self.display_fields:
-                val = str(ex.get(field, ""))
-                lines.append(f"[bold]{field}:[/bold] {val}")
+                if field not in self._reasoning_fields:
+                    val = str(ex.get(field, ""))
+                    lines.append(f"[bold]{field}:[/bold] {val}")
+
+            # Label fields with reasoning interleaved
             for field in self.label_fields:
                 fname = field["name"]
                 current = self.assigned.get((table.cursor_row, fname))
                 if current:
                     lines.append(f"[bold]{fname}:[/bold] {current}")
+                if fname in self._reasoning_map:
+                    rfield = self._reasoning_map[fname]
+                    reason = str(ex.get(rfield, ""))
+                    if reason:
+                        lines.append(
+                            f"  [bold]{rfield}:[/bold] {reason}",
+                        )
+
             self.query_one("#detail", Static).update("\n".join(lines))
 
     # -- Events --
