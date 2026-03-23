@@ -495,6 +495,41 @@ class TestCellNavigation:
             col_after = table.cursor_column
             assert col_after == col_before + 1  # moved to next label column
 
+    async def test_unlabel_clears_current_cell_not_first(
+        self, multi_field_input: Path, output_path: Path,
+    ):
+        """u should clear the label under the cursor, not always the first field."""
+        app = LabelApp(input_path=multi_field_input, output_path=output_path)
+        async with app.run_test() as pilot:
+            app.query_one("#table", DataTable)
+            # Pre-assign both fields on row 0
+            app.assigned[(0, "language")] = "Python"
+            app.assigned[(0, "is_collection")] = "true"
+            # Navigate to is_collection column (second label col)
+            display_cols = [f for f in app._table_fields if not f.get("labels")]
+            is_col_idx = 1 + len(display_cols) + 1  # # + display + skip language
+            for _ in range(is_col_idx):
+                await pilot.press("right")
+            await pilot.pause()
+            await pilot.press("u")
+            await pilot.pause()
+            # is_collection should be cleared, language should remain
+            assert app.assigned[(0, "is_collection")] is None
+            assert app.assigned[(0, "language")] == "Python"
+
+    async def test_shift_u_clears_entire_row(
+        self, multi_field_input: Path, output_path: Path,
+    ):
+        """Shift+U should clear all labels on the current row."""
+        app = LabelApp(input_path=multi_field_input, output_path=output_path)
+        async with app.run_test() as pilot:
+            app.assigned[(0, "language")] = "Python"
+            app.assigned[(0, "is_collection")] = "true"
+            await pilot.press("shift+u")
+            await pilot.pause()
+            assert app.assigned.get((0, "language")) is None
+            assert app.assigned.get((0, "is_collection")) is None
+
 
 LANGUAGES = [
     "Python",

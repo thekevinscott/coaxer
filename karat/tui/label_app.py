@@ -237,6 +237,15 @@ class LabelApp(App):
     # -- Status and detail --
 
     def _active_field_name(self) -> str:
+        """Get the label field name for the cell under the cursor."""
+        if len(self.label_fields) > 1:
+            table = self.query_one("#table", DataTable)
+            col_idx = table.cursor_column
+            # Map column index to field: columns are # + table_fields
+            if col_idx > 0 and col_idx <= len(self._table_fields):
+                field = self._table_fields[col_idx - 1]  # -1 for # col
+                if field.get("labels"):
+                    return field["name"]
         return self.label_fields[0]["name"]
 
     def _update_status(self) -> None:
@@ -458,7 +467,30 @@ class LabelApp(App):
         if not self._search_mode:
             self._apply_label(None)
 
+    def action_unlabel_row(self) -> None:
+        if self._search_mode:
+            return
+        table = self.query_one("#table", DataTable)
+        row_idx = table.cursor_row
+        if row_idx is None or row_idx >= len(self.examples):
+            return
+        for field in self.label_fields:
+            fname = field["name"]
+            self.assigned[(row_idx, fname)] = None
+            col_key = (
+                f"label:{fname}"
+                if len(self.label_fields) > 1
+                else "label"
+            )
+            table.update_cell(str(row_idx), col_key, "---")
+        self._update_status()
+
     def on_key(self, event) -> None:
+        if not self._search_mode and event.key == "shift+u":
+            self.action_unlabel_row()
+            event.prevent_default()
+            event.stop()
+            return
         if self._search_mode:
             if event.key == "escape":
                 self._close_search()
