@@ -1,0 +1,85 @@
+[project]
+name = "dspy-anthropic-agent-sdk"
+dynamic = ["version"]
+description = "DSPy language model backed by the Anthropic Agent SDK (Claude Code)"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "dspy>=2.6",
+    "claude-agent-sdk",
+]
+
+[project.optional-dependencies]
+cache = [
+    "cachetta>=0.6.0",
+]
+dev = [
+    "rust-just>=1.0",
+    "ruff>=0.8",
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "pytest-asyncio>=0.24",
+    "pytest-describe>=2.0",
+    "pytest-watcher>=0.4",
+    "pre-commit>=4.0",
+    "ty>=0.0.1a7",
+    "cachetta>=0.6.0",
+]
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+local_scheme = "no-local-version"
+
+[tool.hatch.build.targets.wheel]
+packages = ["dspy_agent_sdk"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "C90", "UP", "ARG", "SIM", "PTH", "PLR", "RUF"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 8
+max-statements = 50
+
+[tool.ruff.lint.per-file-ignores]
+"*_test.py" = ["PLR2004", "PLR0915", "C901"]
+"tests/**/*.py" = ["PLR2004", "PLR0915", "C901"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dspy_agent_sdk"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["dspy_agent_sdk", "tests"]
+python_files = ["*_test.py"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+source = ["dspy_agent_sdk"]
+branch = true
+omit = ["*_test.py"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

@@ -1,0 +1,71 @@
+# dspy-anthropic-agent-sdk
+
+DSPy language model backed by the Anthropic Agent SDK (Claude Code).
+
+## Workflow
+
+- Work in git worktrees under `.worktrees/`, tie PRs to GitHub issues
+- Never commit directly to main -- always create a PR
+- Keep PRs minimal but complete (one self-contained feature)
+- Don't add unused code for future PRs
+
+## Testing (Red/Green TDD, Outside-In)
+
+1. Write test first (must fail RED)
+2. Minimal implementation to pass (GREEN)
+3. Refactor if needed
+
+TDD Order: integration tests first, then unit tests.
+
+### Running Tests
+
+```bash
+uv run just test-unit        # Unit tests (colocated *_test.py)
+uv run just test-integration # Integration tests
+uv run just test-cov         # Unit tests with coverage
+uv run just ci               # Full local CI (lint + format + typecheck + tests)
+```
+
+## Code Style
+
+- **One function per file** -- `extract_prompt.py` contains `extract_prompt()`
+- **Multi-function -> package** -- Promote to directory with `__init__.py`
+- **Colocated tests** -- `foo.py` -> `foo_test.py`
+- **Test naming** -- Files end in `_test.py` (not `test_*.py`)
+- **Docstrings**: Skip Args/Returns/Raises; use for *why*, not *how*
+- **Type hints**: Prefer fixing issues over `# type: ignore`
+- **Module organization**: `_internal/` for private utilities
+
+## Commit Convention (Conventional Commits)
+
+- `feat:` -- New user-facing functionality
+- `fix:` -- Bug fixes
+- `test:` -- Test additions
+- `chore:` -- CI, tooling, maintenance
+- `refactor:` -- Code restructuring
+- `docs:` -- Documentation
+
+## Project Structure
+
+```
+dspy_agent_sdk/          # Main package
+  _internal/             # Private utilities (run_sync, etc.)
+  lm.py                  # AgentLM - the main DSPy LM class
+  for_query.py           # Async generator over SDK query blocks
+  query_assistant_text.py # Extract text from assistant responses
+  extract_prompt.py      # Normalize DSPy prompt formats
+  dataclasses.py         # OpenAI-compatible response types
+tests/
+  integration/           # Integration tests (mocked SDK)
+```
+
+## Key Commands
+
+```bash
+uv run just lint          # Ruff lint
+uv run just format        # Ruff format
+uv run just typecheck     # ty type check
+uv run just test-unit     # pytest (colocated tests)
+uv run just ci            # Full CI pipeline
+uv run just build         # Build package
+```
