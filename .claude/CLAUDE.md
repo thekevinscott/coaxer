@@ -1,6 +1,6 @@
-# dspy-anthropic-agent-sdk
+# karat
 
-DSPy language model backed by the Anthropic Agent SDK (Claude Code).
+Evals-first prompt optimization. Label examples, get better prompts.
 
 ## Workflow
 
@@ -48,12 +48,13 @@ uv run just ci               # Full local CI (lint + format + typecheck + tests)
 ## Project Structure
 
 ```
-dspy_agent_sdk/          # Main package
+karat/                   # Main package
   _internal/             # Private utilities (run_sync, etc.)
   skills/optimize/       # /optimize skill (SKILL.md, installed via CLI)
-  lm.py                  # AgentLM - the main DSPy LM class
+  lm.py                  # AgentLM - DSPy LM backed by Agent SDK
   load_predict.py        # Load optimized DSPy programs with fallback
-  cli.py                 # CLI entry point (dspy-agent-sdk install)
+  tui.py                 # Textual labeling TUI
+  cli.py                 # CLI entry point (karat install, karat label)
   for_query.py           # Async generator over SDK query blocks
   query_assistant_text.py # Extract text from assistant responses
   extract_prompt.py      # Normalize DSPy prompt formats

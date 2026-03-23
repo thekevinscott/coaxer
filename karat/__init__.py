@@ -7,7 +7,7 @@ it uses your existing Claude Code authentication.
 Quick start::
 
     import dspy
-    from dspy_agent_sdk import AgentLM
+    from karat import AgentLM
 
     lm = AgentLM()
     dspy.configure(lm=lm)
@@ -25,7 +25,7 @@ max_turns, allowed_tools, disallowed_tools, env, etc.).
 
 Load optimized programs saved by the /optimize skill::
 
-    from dspy_agent_sdk import load_predict
+    from karat import load_predict
     classify = load_predict(ClassifyRepo, path="data/optimized.json")
 
 Optional caching via cachetta (decorator-based, wraps the query function)::

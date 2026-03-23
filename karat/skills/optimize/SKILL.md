@@ -60,7 +60,7 @@ With labeled examples:
 
 2. **Configure the LM:**
    ```python
-   from dspy_agent_sdk import AgentLM
+   from karat import AgentLM
    import dspy
 
    lm = AgentLM(tools=[])
@@ -105,6 +105,6 @@ compiled.load("path/to/optimized.json")
 ## Important
 
 - Always use `tools=[]` with AgentLM for classification/structured-output tasks to prevent the model from exploring the filesystem instead of classifying.
-- The `dspy_agent_sdk` package must be installed: `uv add git+ssh://git@github.com/thekevinscott/dspy-anthropic-agent-sdk.git`
+- The `karat` package must be installed: `uv add git+ssh://git@github.com/thekevinscott/karat.git`
 - The ambiguous examples are the most valuable. Do not skip Phase 3 stratification -- random sampling produces worse optimizations.
 - This is an interactive workflow, not a batch script. Wait for user input at each labeling step.

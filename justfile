@@ -33,7 +33,7 @@ hooks:
 
 # Run type checker
 typecheck:
-    uv run ty check dspy_agent_sdk/
+    uv run ty check karat/
 
 # Run unit tests
 test-unit *args:
@@ -53,7 +53,7 @@ test-integration:
 
 # Watch unit tests
 test-unit-watch *args:
-    uv run ptw --now dspy_agent_sdk dspy_agent_sdk/ {{args}}
+    uv run ptw --now karat karat/ {{args}}
 
 # Watch integration tests
 test-integration-watch *args:

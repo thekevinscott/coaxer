@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from dspy_agent_sdk.lm import AgentLM
+from karat.lm import AgentLM
 
-LM_MODULE = "dspy_agent_sdk.lm"
+LM_MODULE = "karat.lm"
 
 
 @pytest.fixture(autouse=True)

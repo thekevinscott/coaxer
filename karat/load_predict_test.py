@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from dspy_agent_sdk.load_predict import load_predict
+from karat.load_predict import load_predict
 
 
 def describe_load_predict():
@@ -14,7 +14,7 @@ def describe_load_predict():
         optimized = tmp_path / "optimized.json"
         optimized.write_text("{}")
 
-        with patch("dspy_agent_sdk.load_predict.dspy.Predict") as mock_predict_cls:
+        with patch("karat.load_predict.dspy.Predict") as mock_predict_cls:
             mock_instance = MagicMock()
             mock_predict_cls.return_value = mock_instance
 
@@ -26,7 +26,7 @@ def describe_load_predict():
     def it_warns_when_path_missing(tmp_path, caplog):
         missing = tmp_path / "nonexistent.json"
 
-        with patch("dspy_agent_sdk.load_predict.dspy.Predict") as mock_predict_cls:
+        with patch("karat.load_predict.dspy.Predict") as mock_predict_cls:
             mock_instance = MagicMock()
             mock_predict_cls.return_value = mock_instance
 
@@ -43,7 +43,7 @@ def describe_load_predict():
         optimized = tmp_path / "optimized.json"
         optimized.write_text("{}")
 
-        with patch("dspy_agent_sdk.load_predict.dspy.Predict") as mock_predict_cls:
+        with patch("karat.load_predict.dspy.Predict") as mock_predict_cls:
             mock_instance = MagicMock()
             mock_predict_cls.return_value = mock_instance
 

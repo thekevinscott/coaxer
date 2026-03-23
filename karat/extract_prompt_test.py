@@ -2,7 +2,7 @@
 
 import pytest
 
-from dspy_agent_sdk.extract_prompt import extract_prompt
+from karat.extract_prompt import extract_prompt
 
 
 @pytest.mark.parametrize(

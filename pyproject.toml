@@ -1,12 +1,13 @@
 [project]
-name = "dspy-anthropic-agent-sdk"
+name = "karat"
 dynamic = ["version"]
-description = "DSPy language model backed by the Anthropic Agent SDK (Claude Code)"
+description = "Evals-first prompt optimization. Label examples, get better prompts."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "dspy>=2.6",
     "claude-agent-sdk",
+    "textual>=3.0",
 ]
 
 [project.optional-dependencies]
@@ -27,7 +28,7 @@ dev = [
 ]
 
 [project.scripts]
-dspy-agent-sdk = "dspy_agent_sdk.cli:main"
+karat = "karat.cli:main"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
@@ -40,10 +41,10 @@ source = "vcs"
 local_scheme = "no-local-version"
 
 [tool.hatch.build.targets.wheel]
-packages = ["dspy_agent_sdk"]
+packages = ["karat"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"dspy_agent_sdk/skills" = "dspy_agent_sdk/skills"
+"karat/skills" = "karat/skills"
 
 [tool.ruff]
 target-version = "py314"
@@ -64,19 +65,19 @@ max-statements = 50
 "tests/**/*.py" = ["PLR2004", "PLR0915", "C901", "ARG001"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["dspy_agent_sdk"]
+known-first-party = ["karat"]
 
 [tool.ruff.format]
 quote-style = "double"
 
 [tool.pytest.ini_options]
-testpaths = ["dspy_agent_sdk", "tests"]
+testpaths = ["karat", "tests"]
 python_files = ["*_test.py"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.run]
-source = ["dspy_agent_sdk"]
+source = ["karat"]
 branch = true
 omit = ["*_test.py"]
 

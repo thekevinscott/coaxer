@@ -1,28 +1,28 @@
-# dspy-anthropic-agent-sdk
+# karat
 
-DSPy language model backed by the Anthropic Agent SDK (Claude Code). Use DSPy's optimizers and signatures with Claude Code as the LLM backend -- no API key needed, uses your existing Claude Code authentication.
+Evals-first prompt optimization. Label examples, get better prompts.
+
+The prompt is a build artifact -- your labeled examples are the source of truth. When you want a better prompt, add more examples and regenerate.
 
 ## Install
 
 ```bash
-uv add git+ssh://git@github.com/thekevinscott/dspy-anthropic-agent-sdk.git
+uv add git+ssh://git@github.com/thekevinscott/karat.git
 ```
 
 ### Install the `/optimize` skill (optional)
 
-After installing the package, run:
-
 ```bash
-uvx --from git+ssh://git@github.com/thekevinscott/dspy-anthropic-agent-sdk.git dspy-agent-sdk install
+uvx --from git+ssh://git@github.com/thekevinscott/karat.git karat install
 ```
 
-This copies the `/optimize` skill into `.claude/skills/optimize/SKILL.md` in your project. The skill lets Claude Code agents optimize DSPy prompts from labeled examples (CSV, TSV, or JSON).
+Copies the `/optimize` skill into `.claude/skills/optimize/SKILL.md` in your project. The skill walks agents through labeling examples and optimizing prompts.
 
 ## Usage
 
 ```python
 import dspy
-from dspy_agent_sdk import AgentLM
+from karat import AgentLM
 
 lm = AgentLM()
 dspy.configure(lm=lm)
@@ -41,13 +41,23 @@ result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
 After running `/optimize`, load the compiled program with `load_predict`:
 
 ```python
-from dspy_agent_sdk import load_predict
+from karat import load_predict
 from my_sigs import ClassifyRepo
 
 # Loads optimized JSON if it exists, falls back to unoptimized
 classify = load_predict(ClassifyRepo, path="data/optimized_classify_repo.json")
 result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
 ```
+
+## Labeling TUI
+
+For interactive labeling in a separate terminal:
+
+```bash
+karat label examples.json --output labeled.json
+```
+
+The agent writes unlabeled examples to a JSON file, the user labels them in the TUI, and the agent picks up the results. See `karat label --help` for the input format.
 
 ## Options
 
@@ -66,17 +76,17 @@ lm = AgentLM(env={"CLAUDECODE": ""})
 
 ## Caching
 
-Pass a [cachetta](https://github.com/thekevinscott/cachetta) instance to wrap the query function with file-backed caching. Cachetta uses the prompt as the cache key automatically, so prompt changes invalidate the cache:
+Pass a [cachetta](https://github.com/thekevinscott/cachetta) instance to wrap the query function with file-backed caching:
 
 ```python
 from cachetta import Cachetta
-from dspy_agent_sdk import AgentLM
+from karat import AgentLM
 
 cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
 lm = AgentLM(cache=cache)
 ```
 
-Install with the cache extra: `uv add "dspy-anthropic-agent-sdk[cache] @ git+ssh://..."`
+Install with the cache extra: `uv add "karat[cache] @ git+ssh://..."`
 
 ## Development
 

@@ -20,7 +20,7 @@ def load_predict(signature: type, path: str | Path | None = None) -> dspy.Predic
 
     Usage::
 
-        from dspy_agent_sdk import load_predict
+        from karat import load_predict
         from my_sigs import ClassifyRepo
 
         classify = load_predict(ClassifyRepo, path="data/optimized_classify_repo.json")
