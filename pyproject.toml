@@ -25,6 +25,7 @@ dev = [
     "pre-commit>=4.0",
     "ty>=0.0.1a7",
     "cachetta>=0.6.0",
+    "curtaincall>=0.3.0",
 ]
 
 [project.scripts]

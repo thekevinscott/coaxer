@@ -2,6 +2,10 @@
 
 Evals-first prompt optimization. Label examples, get better prompts.
 
+## Sandbox
+
+- **All scratch/debug Python scripts must go to `/tmp`**. Never run `python -c` or `python3 -c` inline. Write to `/tmp/karat-*.py` and execute that.
+
 ## Workflow
 
 - Work in git worktrees under `.worktrees/`, tie PRs to GitHub issues
