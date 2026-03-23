@@ -63,29 +63,36 @@ The agent writes examples to a JSON file, the user labels them in the TUI, and t
 
 ```json
 {
-  "label_fields": [
-    {"name": "language", "labels": ["Python", "JavaScript", "Rust"]},
+  "fields": [
+    {"name": "url"},
+    {"name": "description"},
+    {"name": "reasoning", "table": false},
     {"name": "is_collection", "labels": ["true", "false"]}
   ],
-  "display_fields": ["repo_name", "url", "description"],
   "examples": [
-    {"repo_name": "awesome-python", "url": "https://...", "description": "A curated list",
-     "language": "Python"}
+    {"url": "https://...", "description": "A curated list",
+     "reasoning": "YES: curated list pattern",
+     "is_collection": "true"}
   ]
 }
 ```
 
-- **`label_fields`**: one or more fields to label, each with a name and allowed values
-- **`display_fields`**: read-only columns shown for context
-- **Pre-populated values**: if an example already has a value for a label field (e.g. from an agent's first pass), it's shown as editable default
+- **`fields`**: ordered array of field definitions. Each field has:
+  - `name`: key in example objects
+  - `labels` (optional): allowed values -- makes the field editable
+  - `table` (default `true`): show as a table column
+  - `detail` (default `true`): show in detail panel
+- **Pre-populated values**: if an example has a value for a label field, it's shown as an editable default
+- URLs are automatically rendered as clickable links
 
 ### Interaction
 
 - **Single field, <=9 labels**: number keys assign directly
 - **Single field, >9 labels**: Enter opens searchable filter, type to narrow
 - **Multiple fields**: spreadsheet-style cell cursor, Enter on a label cell opens search, Tab/Shift+Tab move between label columns
+- `u` clears current cell, `Shift+U` clears entire row, `q` saves and quits
 
-A single-field shorthand format (`label_field` + `labels` instead of `label_fields`) is also supported for backward compatibility.
+Legacy formats (`label_fields`/`display_fields` or `label_field`/`labels`) are also supported.
 
 ## Options
 

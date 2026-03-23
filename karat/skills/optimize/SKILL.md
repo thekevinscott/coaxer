@@ -49,16 +49,20 @@ Create a JSON file with your sampled examples and pre-populated predictions from
 
 ```json
 {
-  "label_fields": [
-    {"name": "is_collection", "labels": ["true", "false"]}
+  "fields": [
+    {"name": "url", "table": true, "detail": true},
+    {"name": "description", "table": true, "detail": true},
+    {"name": "is_collection_reasoning", "table": false, "detail": true},
+    {"name": "is_collection", "labels": ["true", "false"], "table": true, "detail": true}
   ],
-  "display_fields": ["repo_name", "url", "description"],
   "examples": [
-    {"repo_name": "awesome-python", "url": "https://github.com/vinta/awesome-python",
+    {"url": "https://github.com/vinta/awesome-python",
      "description": "A curated list of awesome Python frameworks",
+     "is_collection_reasoning": "YES: 'curated list' is a collection marker",
      "is_collection": "true"},
-    {"repo_name": "flask", "url": "https://github.com/pallets/flask",
+    {"url": "https://github.com/pallets/flask",
      "description": "The Python micro framework for building web applications",
+     "is_collection_reasoning": "NO: this is a standalone project",
      "is_collection": "false"}
   ]
 }
@@ -66,14 +70,24 @@ Create a JSON file with your sampled examples and pre-populated predictions from
 
 **Format reference:**
 
-- **`label_fields`** (required): array of `{"name": "<field>", "labels": ["opt1", "opt2", ...]}`. One entry per field to label. For a single binary classification, this is one entry with two labels.
-- **`display_fields`** (required): array of field names to show as read-only context columns. Include URLs so the user can click through to inspect the source material. Include enough context that the user can label without leaving the TUI for most examples.
-- **`examples`** (required): array of objects. Each object must have all `display_fields` keys. Pre-populated label values are optional -- if a label field key is present on an example (e.g., `"is_collection": "true"`), it appears as an editable default in the TUI.
+- **`fields`** (required): array of field definitions, in display order. Each field has:
+  - `name` (required): field key matching example objects
+  - `labels` (optional): array of allowed values. Makes the field editable. Omit for read-only display fields.
+  - `table` (optional, default `true`): show this field as a table column
+  - `detail` (optional, default `true`): show this field in the detail panel below the table
+- **`examples`** (required): array of objects. Pre-populated label values are optional -- if a label field key is present on an example (e.g., `"is_collection": "true"`), it appears as an editable default.
 
-For multiple output fields, add more entries to `label_fields`:
+**Field ordering matters.** Fields appear in the table and detail panel in the order you declare them. Put reasoning fields right before or after their label field. Set `"table": false` on reasoning fields to keep the table compact -- they'll still show in the detail panel.
+
+URLs in display fields are **automatically clickable** in the table (truncated but full URL preserved as link).
+
+For multiple output fields:
 ```json
-"label_fields": [
+"fields": [
+  {"name": "url"},
+  {"name": "language_reasoning", "table": false},
   {"name": "language", "labels": ["Python", "JavaScript", "Rust", ...]},
+  {"name": "is_collection_reasoning", "table": false},
   {"name": "is_collection", "labels": ["true", "false"]}
 ]
 ```
@@ -82,6 +96,7 @@ For multiple output fields, add more entries to `label_fields`:
 - **Single field, <=9 labels**: number keys (1-9) assign labels directly
 - **Single field, >9 labels**: press Enter to open a searchable filter, type to narrow, Enter to select
 - **Multiple fields**: spreadsheet-style cell cursor. Enter on a label cell opens search for that field's labels. Tab/Shift+Tab move between label columns. Arrow keys navigate cells.
+- **Keybindings**: `u` = clear current cell, `Shift+U` = clear entire row, `s` = skip, `q` = save & quit, `j`/`k` = navigate rows
 
 ### Step 2: Tell the user to run the TUI
 
@@ -91,7 +106,8 @@ karat label <input.json> --output <output.json>
 
 - `--output` / `-o`: path for labeled results. Defaults to `<input>_labeled.json` if omitted.
 - **Resume**: if the output file already exists, the TUI loads previous labels and continues from where the user left off. The user can safely quit and resume later.
-- The TUI saves on quit (press `q`). Other keys: `s` = skip, `u` = clear label, `j`/`k` = navigate rows.
+- The TUI saves on quit (press `q`).
+- **Resume**: if the output file already exists, the TUI loads previous labels and continues where the user left off.
 
 ### Step 3: Wait for labeled output
 
@@ -99,18 +115,20 @@ The user will tell you when they're done. You can also check if the output file 
 
 ### Step 4: Read the labeled output
 
-The output JSON has the same structure as the input, with label values filled in:
+The output JSON has the same structure as the input (`fields` + `examples`), with label values filled in:
 
 ```json
 {
-  "label_fields": [...],
-  "display_fields": [...],
+  "fields": [...],
   "examples": [
-    {"repo_name": "awesome-python", "url": "...", "description": "...",
+    {"url": "...", "description": "...",
+     "is_collection_reasoning": "YES: ...",
      "is_collection": "true"},
-    {"repo_name": "flask", "url": "...", "description": "...",
+    {"url": "...", "description": "...",
+     "is_collection_reasoning": "NO: ...",
      "is_collection": "false"},
-    {"repo_name": "ambiguous-repo", "url": "...", "description": "...",
+    {"url": "...", "description": "...",
+     "is_collection_reasoning": "...",
      "is_collection": null}
   ]
 }
