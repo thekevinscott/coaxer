@@ -53,15 +53,52 @@ def _make_cell_value(val: str, max_width: int = 60) -> str | Text:
     return val
 
 
-def _parse_input(data: dict) -> tuple[list[dict], list[str], list[dict]]:
-    """Parse input JSON into (label_fields, display_fields, examples)."""
-    display_fields = data["display_fields"]
+def _parse_input(data: dict) -> tuple[list[dict], list[dict]]:
+    """Parse input JSON into (fields, examples).
+
+    Supports three formats:
+    1. Unified: {"fields": [...], "examples": [...]}
+    2. Split: {"label_fields": [...], "display_fields": [...], "examples": [...]}
+    3. Legacy: {"label_field": "...", "labels": [...], "display_fields": [...], ...}
+
+    Returns normalized fields list where each field has:
+      name, table (bool), detail (bool), labels (list|None)
+    """
     examples = data["examples"]
+
+    if "fields" in data:
+        fields = []
+        for f in data["fields"]:
+            fields.append({
+                "name": f["name"],
+                "table": f.get("table", True),
+                "detail": f.get("detail", True),
+                "labels": f.get("labels"),
+            })
+        return fields, examples
+
+    # Legacy formats -> convert to unified
     if "label_fields" in data:
         label_fields = data["label_fields"]
     else:
-        label_fields = [{"name": data["label_field"], "labels": data["labels"]}]
-    return label_fields, display_fields, examples
+        label_fields = [
+            {"name": data["label_field"], "labels": data["labels"]},
+        ]
+    display_fields = data.get("display_fields", [])
+
+    fields = []
+    for df in display_fields:
+        fields.append({
+            "name": df, "table": True, "detail": True, "labels": None,
+        })
+    for lf in label_fields:
+        fields.append({
+            "name": lf["name"],
+            "table": True,
+            "detail": True,
+            "labels": lf["labels"],
+        })
+    return fields, examples
 
 
 def _extract_labels(
@@ -131,8 +168,18 @@ class LabelApp(App):
         self.output_path = output_path
 
         data = json.loads(input_path.read_text())
-        self.label_fields, self.display_fields, self.examples = _parse_input(data)
-        self.labels: list[str] = self.label_fields[0]["labels"]
+        self._fields, self.examples = _parse_input(data)
+
+        # Derived views
+        self.label_fields = [f for f in self._fields if f.get("labels")]
+        self._table_fields = [f for f in self._fields if f.get("table", True)]
+        self._detail_fields = [
+            f for f in self._fields if f.get("detail", True)
+        ]
+
+        self.labels: list[str] = (
+            self.label_fields[0]["labels"] if self.label_fields else []
+        )
         self._use_number_keys = (
             len(self.label_fields) == 1
             and len(self.labels) <= MAX_NUMBER_KEY_LABELS
@@ -140,18 +187,6 @@ class LabelApp(App):
         self.assigned = _load_assigned(
             self.examples, self.label_fields, output_path,
         )
-
-        # Detect reasoning fields (shown in detail panel, not table)
-        label_names = {f["name"] for f in self.label_fields}
-        self._reasoning_map: dict[str, str] = {}
-        for df in self.display_fields:
-            for lname in label_names:
-                if df in (f"{lname}_reasoning", f"{lname}_reason"):
-                    self._reasoning_map[lname] = df
-        self._reasoning_fields = set(self._reasoning_map.values())
-        self._table_display_fields = [
-            f for f in self.display_fields if f not in self._reasoning_fields
-        ]
 
         if self._use_number_keys:
             for i, label in enumerate(self.labels):
@@ -177,26 +212,23 @@ class LabelApp(App):
         self.query_one("#search-panel").display = False
         table = self.query_one("#table", DataTable)
         table.add_column("#", key="idx")
-        for field in self._table_display_fields:
-            table.add_column(field, key=field)
-        if len(self.label_fields) == 1:
-            table.add_column("Label", key="label")
-        else:
-            for field in self.label_fields:
-                table.add_column(field["name"], key=f"label:{field['name']}")
+        for f in self._table_fields:
+            if f.get("labels"):
+                key = "label" if len(self.label_fields) == 1 else f"label:{f['name']}"
+                table.add_column(f["name"], key=key)
+            else:
+                table.add_column(f["name"], key=f["name"])
 
         for i, ex in enumerate(self.examples):
             row = [str(i + 1)]
-            for field in self._table_display_fields:
-                val = str(ex.get(field, ""))
-                row.append(_make_cell_value(val))
-            if len(self.label_fields) == 1:
-                fname = self.label_fields[0]["name"]
-                row.append(self.assigned.get((i, fname), "") or "---")
-            else:
-                for field in self.label_fields:
-                    fname = field["name"]
-                    row.append(self.assigned.get((i, fname), "") or "---")
+            for f in self._table_fields:
+                if f.get("labels"):
+                    row.append(
+                        self.assigned.get((i, f["name"]), "") or "---",
+                    )
+                else:
+                    val = str(ex.get(f["name"], ""))
+                    row.append(_make_cell_value(val))
             table.add_row(*row, key=str(i))
 
         self._update_status()
@@ -240,26 +272,16 @@ class LabelApp(App):
         ):
             ex = self.examples[table.cursor_row]
             lines = []
-
-            # Non-reasoning display fields first
-            for field in self.display_fields:
-                if field not in self._reasoning_fields:
-                    val = str(ex.get(field, ""))
-                    lines.append(f"[bold]{field}:[/bold] {val}")
-
-            # Label fields with reasoning interleaved
-            for field in self.label_fields:
-                fname = field["name"]
-                current = self.assigned.get((table.cursor_row, fname))
-                if current:
-                    lines.append(f"[bold]{fname}:[/bold] {current}")
-                if fname in self._reasoning_map:
-                    rfield = self._reasoning_map[fname]
-                    reason = str(ex.get(rfield, ""))
-                    if reason:
-                        lines.append(
-                            f"  [bold]{rfield}:[/bold] {reason}",
-                        )
+            for f in self._detail_fields:
+                fname = f["name"]
+                if f.get("labels"):
+                    current = self.assigned.get((table.cursor_row, fname))
+                    if current:
+                        lines.append(f"[bold]{fname}:[/bold] {current}")
+                else:
+                    val = str(ex.get(fname, ""))
+                    if val:
+                        lines.append(f"[bold]{fname}:[/bold] {val}")
 
             self.query_one("#detail", Static).update("\n".join(lines))
 
@@ -320,8 +342,7 @@ class LabelApp(App):
 
     def _save(self) -> None:
         output = {
-            "label_fields": self.label_fields,
-            "display_fields": self.display_fields,
+            "fields": self._fields,
             "examples": [],
         }
         for i, ex in enumerate(self.examples):

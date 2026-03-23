@@ -239,67 +239,72 @@ class TestMultiFieldDataModel:
         assert result["examples"][2].get("language") is None
 
 
-class TestReasoningInterleave:
-    """Reasoning fields should appear inline with their label fields in detail."""
+class TestUnifiedFields:
+    """Unified `fields` array with per-field visibility configuration."""
 
     @pytest.fixture
-    def reasoning_input(self, tmp_path: Path) -> Path:
+    def unified_input(self, tmp_path: Path) -> Path:
         data = {
-            "label_fields": [
-                {"name": "includes_what", "labels": ["true", "false"]},
-                {"name": "includes_when", "labels": ["true", "false"]},
-            ],
-            "display_fields": [
-                "url",
-                "description",
-                "includes_what_reasoning",
-                "includes_when_reasoning",
+            "fields": [
+                {"name": "url", "table": True, "detail": True},
+                {"name": "description", "table": True, "detail": True},
+                {"name": "what_reasoning", "table": False, "detail": True},
+                {
+                    "name": "includes_what",
+                    "labels": ["true", "false"],
+                    "table": True,
+                    "detail": True,
+                },
+                {"name": "when_reasoning", "table": False, "detail": True},
+                {
+                    "name": "includes_when",
+                    "labels": ["true", "false"],
+                    "table": True,
+                    "detail": True,
+                },
             ],
             "examples": [
                 {
                     "url": "https://example.com",
                     "description": "A daily notes skill",
-                    "includes_what_reasoning": "YES: states what it does",
-                    "includes_when_reasoning": "YES: gives trigger",
+                    "what_reasoning": "YES: clearly states purpose",
                     "includes_what": "true",
+                    "when_reasoning": "YES: gives trigger",
                     "includes_when": "true",
                 },
             ],
         }
-        p = tmp_path / "reasoning.json"
+        p = tmp_path / "unified.json"
         p.write_text(json.dumps(data))
         return p
 
-    async def test_reasoning_shown_after_label(
-        self, reasoning_input: Path, output_path: Path,
+    async def test_app_parses_unified_fields(
+        self, unified_input: Path, output_path: Path,
     ):
-        """Reasoning display fields should appear right after their label."""
-        app = LabelApp(input_path=reasoning_input, output_path=output_path)
+        """Should parse unified fields format."""
+        app = LabelApp(input_path=unified_input, output_path=output_path)
         async with app.run_test():
-            from textual.widgets import Static
+            assert len(app.label_fields) == 2
+            assert app.label_fields[0]["name"] == "includes_what"
 
-            detail = app.query_one("#detail", Static)
-            rendered = str(detail.render())
-            # The order should be:
-            # url, description (non-reasoning display fields)
-            # includes_what: true
-            #   includes_what_reasoning: YES: states what it does
-            # includes_when: true
-            #   includes_when_reasoning: YES: gives trigger
-            what_pos = rendered.find("includes_what:")
-            what_reason_pos = rendered.find("includes_what_reasoning:")
-            when_pos = rendered.find("includes_when:")
-            when_reason_pos = rendered.find("includes_when_reasoning:")
-
-            # Reasoning should come right after its label, before next label
-            assert what_pos < what_reason_pos < when_pos
-            assert when_pos < when_reason_pos
-
-    async def test_non_reasoning_display_fields_shown_first(
-        self, reasoning_input: Path, output_path: Path,
+    async def test_table_excludes_hidden_columns(
+        self, unified_input: Path, output_path: Path,
     ):
-        """Non-reasoning display fields (url, description) come before labels."""
-        app = LabelApp(input_path=reasoning_input, output_path=output_path)
+        """Fields with table=False should not appear as table columns."""
+        app = LabelApp(input_path=unified_input, output_path=output_path)
+        async with app.run_test():
+            table = app.query_one("#table", DataTable)
+            col_keys = [str(c.key.value) for c in table.columns.values()]
+            assert "what_reasoning" not in col_keys
+            assert "when_reasoning" not in col_keys
+            assert "url" in col_keys
+            assert "label:includes_what" in col_keys
+
+    async def test_detail_preserves_field_order(
+        self, unified_input: Path, output_path: Path,
+    ):
+        """Detail panel should show fields in their declared order."""
+        app = LabelApp(input_path=unified_input, output_path=output_path)
         async with app.run_test():
             from textual.widgets import Static
 
@@ -307,8 +312,60 @@ class TestReasoningInterleave:
             rendered = str(detail.render())
             url_pos = rendered.find("url:")
             desc_pos = rendered.find("description:")
+            what_reason_pos = rendered.find("what_reasoning:")
             what_pos = rendered.find("includes_what:")
-            assert url_pos < desc_pos < what_pos
+            when_reason_pos = rendered.find("when_reasoning:")
+            when_pos = rendered.find("includes_when:")
+
+            assert url_pos < desc_pos
+            assert desc_pos < what_reason_pos
+            assert what_reason_pos < what_pos
+            assert what_pos < when_reason_pos
+            assert when_reason_pos < when_pos
+
+    async def test_detail_hides_fields_with_detail_false(
+        self, tmp_path: Path, output_path: Path,
+    ):
+        """Fields with detail=False should not appear in detail panel."""
+        data = {
+            "fields": [
+                {"name": "url", "detail": True},
+                {"name": "internal_id", "detail": False},
+                {"name": "label", "labels": ["a", "b"]},
+            ],
+            "examples": [
+                {"url": "https://example.com", "internal_id": "abc123"},
+            ],
+        }
+        p = tmp_path / "hidden.json"
+        p.write_text(json.dumps(data))
+        app = LabelApp(input_path=p, output_path=output_path)
+        async with app.run_test():
+            from textual.widgets import Static
+
+            detail = app.query_one("#detail", Static)
+            rendered = str(detail.render())
+            assert "url:" in rendered
+            assert "internal_id" not in rendered
+
+    async def test_defaults_table_and_detail_to_true(
+        self, tmp_path: Path, output_path: Path,
+    ):
+        """Fields without explicit table/detail should default to True."""
+        data = {
+            "fields": [
+                {"name": "url"},
+                {"name": "category", "labels": ["A", "B"]},
+            ],
+            "examples": [{"url": "https://example.com"}],
+        }
+        p = tmp_path / "defaults.json"
+        p.write_text(json.dumps(data))
+        app = LabelApp(input_path=p, output_path=output_path)
+        async with app.run_test():
+            table = app.query_one("#table", DataTable)
+            col_keys = [str(c.key.value) for c in table.columns.values()]
+            assert "url" in col_keys
 
 
 class TestClickableUrls:
@@ -399,7 +456,8 @@ class TestCellNavigation:
             # Navigate to the first label column (language)
             # Columns: # | repo_name | description | language | is_collection
             # Move right to language column
-            label_col_idx = 1 + len(app.display_fields)  # skip # and display fields
+            display_cols = [f for f in app._table_fields if not f.get("labels")]
+            label_col_idx = 1 + len(display_cols)
             for _ in range(label_col_idx):
                 await pilot.press("right")
             await pilot.pause()
@@ -427,7 +485,7 @@ class TestCellNavigation:
         async with app.run_test() as pilot:
             table = app.query_one("#table", DataTable)
             # Navigate to first label column
-            label_col_idx = 1 + len(app.display_fields)
+            label_col_idx = 1 + len([f for f in app._table_fields if not f.get("labels")])
             for _ in range(label_col_idx):
                 await pilot.press("right")
             await pilot.pause()
