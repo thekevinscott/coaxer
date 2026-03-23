@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import ClassVar
 
+from rich.text import Text
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -13,6 +14,43 @@ from textual.widgets import DataTable, Footer, Header, Input, OptionList, Static
 from textual.widgets.option_list import Option
 
 MAX_NUMBER_KEY_LABELS = 9
+
+
+def _display_width(s: str) -> int:
+    """Approximate display width accounting for wide (CJK) characters."""
+    import unicodedata
+
+    width = 0
+    for ch in s:
+        eaw = unicodedata.east_asian_width(ch)
+        width += 2 if eaw in ("W", "F") else 1
+    return width
+
+
+def _truncate_to_width(s: str, max_width: int) -> str:
+    """Truncate a string to fit within max_width display columns."""
+    import unicodedata
+
+    width = 0
+    for i, ch in enumerate(s):
+        eaw = unicodedata.east_asian_width(ch)
+        char_w = 2 if eaw in ("W", "F") else 1
+        if width + char_w > max_width - 3:
+            return s[:i] + "..."
+        width += char_w
+    return s
+
+
+def _make_cell_value(val: str, max_width: int = 60) -> str | Text:
+    """Create a cell value, making URLs clickable and truncating wide text."""
+    if val.startswith(("http://", "https://")):
+        display = _truncate_to_width(val, max_width)
+        t = Text(display)
+        t.stylize(f"link {val}")
+        return t
+    if _display_width(val) > max_width:
+        return _truncate_to_width(val, max_width)
+    return val
 
 
 def _parse_input(data: dict) -> tuple[list[dict], list[str], list[dict]]:
@@ -26,6 +64,19 @@ def _parse_input(data: dict) -> tuple[list[dict], list[str], list[dict]]:
     return label_fields, display_fields, examples
 
 
+def _extract_labels(
+    examples: list[dict],
+    label_fields: list[dict],
+    assigned: dict[tuple[int, str], str | None],
+) -> None:
+    """Extract label values from examples into the assigned dict."""
+    for i, ex in enumerate(examples):
+        for field in label_fields:
+            fname = field["name"]
+            if fname in ex and ex[fname] is not None:
+                assigned[(i, fname)] = ex[fname]
+
+
 def _load_assigned(
     examples: list[dict],
     label_fields: list[dict],
@@ -34,32 +85,23 @@ def _load_assigned(
     """Build the assigned dict from examples and optional output file."""
     assigned: dict[tuple[int, str], str | None] = {}
 
-    # Pre-populate from example values
-    for i, ex in enumerate(examples):
-        for field in label_fields:
-            fname = field["name"]
-            if fname in ex and ex[fname] is not None:
-                assigned[(i, fname)] = ex[fname]
+    _extract_labels(examples, label_fields, assigned)
 
-    # Load existing output if resuming
     if output_path.exists():
         try:
             existing = json.loads(output_path.read_text())
         except (json.JSONDecodeError, ValueError):
             existing = None
         if isinstance(existing, dict):
-            for i, ex in enumerate(existing.get("examples", [])):
-                for field in label_fields:
-                    fname = field["name"]
-                    if fname in ex and ex[fname] is not None:
-                        assigned[(i, fname)] = ex[fname]
-                # Backward compat: old format uses "label" key
-                if (
-                    "label" in ex
-                    and ex["label"] is not None
-                    and len(label_fields) == 1
-                ):
-                    assigned[(i, label_fields[0]["name"])] = ex["label"]
+            _extract_labels(
+                existing.get("examples", []), label_fields, assigned,
+            )
+            # Backward compat: old format uses "label" key
+            if len(label_fields) == 1:
+                fname = label_fields[0]["name"]
+                for i, ex in enumerate(existing.get("examples", [])):
+                    if "label" in ex and ex["label"] is not None:
+                        assigned[(i, fname)] = ex["label"]
 
     return assigned
 
@@ -135,10 +177,7 @@ class LabelApp(App):
             row = [str(i + 1)]
             for field in self.display_fields:
                 val = str(ex.get(field, ""))
-                max_col_width = 60
-                if len(val) > max_col_width:
-                    val = val[: max_col_width - 3] + "..."
-                row.append(val)
+                row.append(_make_cell_value(val))
             if len(self.label_fields) == 1:
                 fname = self.label_fields[0]["name"]
                 row.append(self.assigned.get((i, fname), "") or "---")

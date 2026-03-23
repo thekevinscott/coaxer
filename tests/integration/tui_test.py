@@ -239,6 +239,44 @@ class TestMultiFieldDataModel:
         assert result["examples"][2].get("language") is None
 
 
+class TestClickableUrls:
+    """URL values in display fields should be rendered as clickable links."""
+
+    @pytest.fixture
+    def url_input(self, tmp_path: Path) -> Path:
+        data = {
+            "label_fields": [
+                {"name": "is_collection", "labels": ["true", "false"]},
+            ],
+            "display_fields": ["repo_name", "url"],
+            "examples": [
+                {
+                    "repo_name": "awesome-python",
+                    "url": "https://github.com/vinta/awesome-python",
+                    "id": "1",
+                },
+            ],
+        }
+        p = tmp_path / "urls.json"
+        p.write_text(json.dumps(data))
+        return p
+
+    async def test_url_cell_is_rich_text_with_link(
+        self, url_input: Path, output_path: Path,
+    ):
+        """URL cells should be Rich Text objects with link style."""
+        from rich.text import Text
+
+        app = LabelApp(input_path=url_input, output_path=output_path)
+        async with app.run_test():
+            table = app.query_one("#table", DataTable)
+            cell = table.get_cell(str(0), "url")
+            assert isinstance(cell, Text)
+            # Check the link is embedded in the style
+            url = "https://github.com/vinta/awesome-python"
+            assert url in str(cell._spans[0].style)
+
+
 class TestResumeEdgeCases:
     """Resume should handle unexpected output file formats gracefully."""
 
