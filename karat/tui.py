@@ -1,6 +1,6 @@
 """TUI for labeling examples interactively.
 
-Launched via `karat label <input.json> --output <output.json> --labels a,b,c`.
+Launched via `karat label <input.json> --output <output.json>`.
 The agent writes unlabeled examples to a JSON file, the user labels them in this TUI,
 and the TUI writes labeled results back for the agent to pick up.
 
@@ -17,6 +17,9 @@ Input JSON format::
     }
 
 Output JSON: same structure with a "label" key added to each example.
+
+For <=9 labels, number keys (1-9) assign labels directly.
+For >9 labels, press Enter to open a searchable filter, type to narrow, Enter to select.
 """
 
 import json
@@ -27,8 +30,12 @@ from typing import ClassVar
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
+from textual.containers import Vertical
 from textual.reactive import reactive
-from textual.widgets import DataTable, Footer, Header, Static
+from textual.widgets import DataTable, Footer, Header, Input, OptionList, Static
+from textual.widgets.option_list import Option
+
+MAX_NUMBER_KEY_LABELS = 9
 
 
 class LabelApp(App):
@@ -47,9 +54,13 @@ class LabelApp(App):
     #status { height: 1; dock: top; padding: 0 1; }
     #detail { height: auto; max-height: 40%; padding: 1 2; border: solid $primary; }
     DataTable { height: 1fr; }
+    #search-panel { height: auto; max-height: 50%; dock: bottom; padding: 1 2; border: solid $accent; }
+    #label-search { margin-bottom: 1; }
+    #label-options { height: auto; max-height: 10; }
     """
 
     current_row: reactive[int] = reactive(0)
+    _search_mode: reactive[bool] = reactive(False)
 
     def __init__(
         self,
@@ -67,6 +78,7 @@ class LabelApp(App):
         self.display_fields: list[str] = data["display_fields"]
         self.examples: list[dict] = data["examples"]
         self.assigned: dict[int, str | None] = {}
+        self._use_number_keys = len(self.labels) <= MAX_NUMBER_KEY_LABELS
 
         # Load existing output if resuming
         if output_path.exists():
@@ -75,21 +87,27 @@ class LabelApp(App):
                 if "label" in ex and ex["label"] is not None:
                     self.assigned[i] = ex["label"]
 
-        # Add number-key bindings for labels
-        for i, label in enumerate(self.labels):
-            key = str(i + 1)
-            self._bindings.bind(
-                key, f"label_{i}", f"[{key}] {label}", show=True
-            )
+        # Add number-key bindings only for small label sets
+        if self._use_number_keys:
+            for i, label in enumerate(self.labels):
+                key = str(i + 1)
+                self._bindings.bind(
+                    key, f"label_{i}", f"[{key}] {label}", show=True
+                )
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Static(id="status")
         yield DataTable(id="table", cursor_type="row")
         yield Static(id="detail")
+        with Vertical(id="search-panel"):
+            yield Input(id="label-search", placeholder="Type to filter labels...")
+            yield OptionList(id="label-options")
         yield Footer()
 
     def on_mount(self) -> None:
+        # Hide search panel initially
+        self.query_one("#search-panel").display = False
         table = self.query_one("#table", DataTable)
         table.add_column("#", key="idx")
         table.add_column("Label", key="label")
@@ -101,7 +119,6 @@ class LabelApp(App):
             row = [str(i + 1), label_display or "---"]
             for field in self.display_fields:
                 val = str(ex.get(field, ""))
-                # Truncate for table display
                 max_col_width = 60
                 if len(val) > max_col_width:
                     val = val[: max_col_width - 3] + "..."
@@ -122,8 +139,11 @@ class LabelApp(App):
         status = f"Labeled: {labeled}/{total}"
         if counts_str:
             status += f"  ({counts_str})"
-        keys = " ".join(f"[{i + 1}]={label}" for i, label in enumerate(self.labels))
-        status += f"  |  Keys: {keys}  [s]=skip  [u]=clear  [q]=save & quit"
+        if self._use_number_keys:
+            keys = " ".join(f"[{i + 1}]={label}" for i, label in enumerate(self.labels))
+            status += f"  |  Keys: {keys}  [s]=skip  [u]=clear  [q]=save & quit"
+        else:
+            status += f"  |  [Enter]=search labels  [s]=skip  [u]=clear  [q]=save & quit"
         self.query_one("#status", Static).update(status)
 
     def _update_detail(self) -> None:
@@ -140,9 +160,14 @@ class LabelApp(App):
                 lines.append(f"\n[bold]Label:[/bold] {current_label}")
             self.query_one("#detail", Static).update("\n".join(lines))
 
-    @on(DataTable.CursorMoved)
+    @on(DataTable.RowHighlighted)
     def _on_cursor_moved(self) -> None:
         self._update_detail()
+
+    @on(DataTable.RowSelected)
+    def _on_row_selected(self) -> None:
+        if not self._use_number_keys:
+            self._open_search()
 
     def _apply_label(self, label: str | None) -> None:
         table = self.query_one("#table", DataTable)
@@ -176,21 +201,92 @@ class LabelApp(App):
             output["examples"].append(labeled_ex)
         self.output_path.write_text(json.dumps(output, indent=2))
 
+    # -- Search mode for large label sets --
+
+    def _open_search(self) -> None:
+        self._search_mode = True
+        panel = self.query_one("#search-panel")
+        panel.display = True
+        search_input = self.query_one("#label-search", Input)
+        search_input.value = ""
+        self._update_search_options("")
+        self.set_focus(search_input)
+
+    def _close_search(self) -> None:
+        self._search_mode = False
+        panel = self.query_one("#search-panel")
+        panel.display = False
+        self.query_one("#table", DataTable).focus()
+
+    def _update_search_options(self, query: str) -> None:
+        option_list = self.query_one("#label-options", OptionList)
+        option_list.clear_options()
+        q = query.lower()
+        for label in self.labels:
+            if not q or q in label.lower():
+                option_list.add_option(Option(label, id=label))
+        if option_list.option_count > 0:
+            option_list.highlighted = 0
+
+    @on(Input.Changed, "#label-search")
+    def _on_search_changed(self, event: Input.Changed) -> None:
+        self._update_search_options(event.value)
+
+    @on(Input.Submitted, "#label-search")
+    def _on_search_submitted(self, event: Input.Submitted) -> None:
+        """Enter in search input: select the highlighted option."""
+        option_list = self.query_one("#label-options", OptionList)
+        if option_list.option_count > 0:
+            highlighted = option_list.highlighted
+            idx = highlighted if highlighted is not None else 0
+            option = option_list.get_option_at_index(idx)
+            self._apply_label(str(option.prompt))
+            self._close_search()
+
+    @on(OptionList.OptionSelected, "#label-options")
+    def _on_option_selected(self, event: OptionList.OptionSelected) -> None:
+        self._apply_label(str(event.option.prompt))
+        self._close_search()
+
+    # -- Actions --
+
+    def action_open_search(self) -> None:
+        self._open_search()
+
     def action_quit_and_save(self) -> None:
         self._save()
         self.exit()
 
     def action_cursor_down(self) -> None:
-        self.query_one("#table", DataTable).action_cursor_down()
+        if not self._search_mode:
+            self.query_one("#table", DataTable).action_cursor_down()
 
     def action_cursor_up(self) -> None:
-        self.query_one("#table", DataTable).action_cursor_up()
+        if not self._search_mode:
+            self.query_one("#table", DataTable).action_cursor_up()
 
     def action_skip(self) -> None:
-        self._apply_label(None)
+        if not self._search_mode:
+            self._apply_label(None)
 
     def action_unlabel(self) -> None:
-        self._apply_label(None)
+        if not self._search_mode:
+            self._apply_label(None)
+
+    def on_key(self, event) -> None:
+        if self._search_mode:
+            if event.key == "escape":
+                self._close_search()
+                event.prevent_default()
+                event.stop()
+            elif event.key == "down":
+                self.query_one("#label-options", OptionList).action_cursor_down()
+                event.prevent_default()
+                event.stop()
+            elif event.key == "up":
+                self.query_one("#label-options", OptionList).action_cursor_up()
+                event.prevent_default()
+                event.stop()
 
     # Label actions are registered dynamically in __init__ via _bindings.bind().
     # Textual resolves action_label_0, action_label_1, etc.
