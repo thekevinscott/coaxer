@@ -41,9 +41,11 @@ Do NOT just random-sample. Use the LM itself to do a rough classification pass o
 
 ## Phase 4: Collect Labels via TUI
 
-Use `karat label` to collect human labels. You write a JSON file with your pre-populated first-pass labels, the user reviews and corrects them in the TUI in a separate terminal.
+Use `karat label` to collect human labels. You write a JSON file with pre-populated first-pass labels, the user reviews and corrects them in the TUI in a separate terminal.
 
-1. **Write the labeling file.** Create a JSON file with your sampled examples and pre-populated predictions:
+### Step 1: Write the labeling file
+
+Create a JSON file with your sampled examples and pre-populated predictions from Phase 3:
 
 ```json
 {
@@ -52,13 +54,21 @@ Use `karat label` to collect human labels. You write a JSON file with your pre-p
   ],
   "display_fields": ["repo_name", "url", "description"],
   "examples": [
-    {"repo_name": "awesome-python", "url": "https://...", "description": "A curated list",
+    {"repo_name": "awesome-python", "url": "https://github.com/vinta/awesome-python",
+     "description": "A curated list of awesome Python frameworks",
      "is_collection": "true"},
-    {"repo_name": "flask", "url": "https://...", "description": "Web framework",
+    {"repo_name": "flask", "url": "https://github.com/pallets/flask",
+     "description": "The Python micro framework for building web applications",
      "is_collection": "false"}
   ]
 }
 ```
+
+**Format reference:**
+
+- **`label_fields`** (required): array of `{"name": "<field>", "labels": ["opt1", "opt2", ...]}`. One entry per field to label. For a single binary classification, this is one entry with two labels.
+- **`display_fields`** (required): array of field names to show as read-only context columns. Include URLs so the user can click through to inspect the source material. Include enough context that the user can label without leaving the TUI for most examples.
+- **`examples`** (required): array of objects. Each object must have all `display_fields` keys. Pre-populated label values are optional -- if a label field key is present on an example (e.g., `"is_collection": "true"`), it appears as an editable default in the TUI.
 
 For multiple output fields, add more entries to `label_fields`:
 ```json
@@ -68,16 +78,46 @@ For multiple output fields, add more entries to `label_fields`:
 ]
 ```
 
-Pre-populated values (from your Phase 3 rough classification) appear as editable defaults in the TUI. The human corrects mistakes rather than labeling from scratch.
+**TUI interaction modes** (automatic, based on the data):
+- **Single field, <=9 labels**: number keys (1-9) assign labels directly
+- **Single field, >9 labels**: press Enter to open a searchable filter, type to narrow, Enter to select
+- **Multiple fields**: spreadsheet-style cell cursor. Enter on a label cell opens search for that field's labels. Tab/Shift+Tab move between label columns. Arrow keys navigate cells.
 
-2. **Tell the user to run the TUI** in a separate terminal:
+### Step 2: Tell the user to run the TUI
+
 ```bash
-karat label examples.json --output labeled.json
+karat label <input.json> --output <output.json>
 ```
 
-3. **Wait for the user to finish labeling.** The TUI saves results to the output file. The user will tell you when they're done, or you can check if the output file has been written/updated.
+- `--output` / `-o`: path for labeled results. Defaults to `<input>_labeled.json` if omitted.
+- **Resume**: if the output file already exists, the TUI loads previous labels and continues from where the user left off. The user can safely quit and resume later.
+- The TUI saves on quit (press `q`). Other keys: `s` = skip, `u` = clear label, `j`/`k` = navigate rows.
 
-4. **Read the labeled output.** Parse the output JSON -- each example will have the label field values filled in (or `null` if skipped).
+### Step 3: Wait for labeled output
+
+The user will tell you when they're done. You can also check if the output file exists and has been recently modified.
+
+### Step 4: Read the labeled output
+
+The output JSON has the same structure as the input, with label values filled in:
+
+```json
+{
+  "label_fields": [...],
+  "display_fields": [...],
+  "examples": [
+    {"repo_name": "awesome-python", "url": "...", "description": "...",
+     "is_collection": "true"},
+    {"repo_name": "flask", "url": "...", "description": "...",
+     "is_collection": "false"},
+    {"repo_name": "ambiguous-repo", "url": "...", "description": "...",
+     "is_collection": null}
+  ]
+}
+```
+
+- Label values are strings matching one of the `labels` options, or `null` if the user skipped that example.
+- **Exclude `null` examples from training.** A `null` label means the user intentionally skipped it -- do not include it in the training or validation set.
 
 ## Phase 5: Run DSPy Optimization
 
