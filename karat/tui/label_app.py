@@ -43,19 +43,23 @@ def _load_assigned(
 
     # Load existing output if resuming
     if output_path.exists():
-        existing = json.loads(output_path.read_text())
-        for i, ex in enumerate(existing.get("examples", [])):
-            for field in label_fields:
-                fname = field["name"]
-                if fname in ex and ex[fname] is not None:
-                    assigned[(i, fname)] = ex[fname]
-            # Backward compat: old format uses "label" key
-            if (
-                "label" in ex
-                and ex["label"] is not None
-                and len(label_fields) == 1
-            ):
-                assigned[(i, label_fields[0]["name"])] = ex["label"]
+        try:
+            existing = json.loads(output_path.read_text())
+        except (json.JSONDecodeError, ValueError):
+            existing = None
+        if isinstance(existing, dict):
+            for i, ex in enumerate(existing.get("examples", [])):
+                for field in label_fields:
+                    fname = field["name"]
+                    if fname in ex and ex[fname] is not None:
+                        assigned[(i, fname)] = ex[fname]
+                # Backward compat: old format uses "label" key
+                if (
+                    "label" in ex
+                    and ex["label"] is not None
+                    and len(label_fields) == 1
+                ):
+                    assigned[(i, label_fields[0]["name"])] = ex["label"]
 
     return assigned
 

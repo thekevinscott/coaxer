@@ -239,6 +239,29 @@ class TestMultiFieldDataModel:
         assert result["examples"][2].get("language") is None
 
 
+class TestResumeEdgeCases:
+    """Resume should handle unexpected output file formats gracefully."""
+
+    async def test_resume_ignores_non_dict_output(
+        self, sample_input: Path, output_path: Path,
+    ):
+        """If output file is a plain list (not a dict), ignore it."""
+        output_path.write_text('[{"repo_name": "foo", "label": "collection"}]')
+        app = LabelApp(input_path=sample_input, output_path=output_path)
+        async with app.run_test():
+            # Should start fresh, not crash
+            assert (0, "is_collection") not in app.assigned
+
+    async def test_resume_ignores_invalid_json(
+        self, sample_input: Path, output_path: Path,
+    ):
+        """If output file contains invalid JSON, ignore it."""
+        output_path.write_text("not json at all")
+        app = LabelApp(input_path=sample_input, output_path=output_path)
+        async with app.run_test():
+            assert (0, "is_collection") not in app.assigned
+
+
 class TestCellNavigation:
     """Multi-field mode uses cell cursor for spreadsheet-style editing."""
 
