@@ -5,7 +5,7 @@ Launched via ``karat label <input.json> --output <output.json>``.
 An agent writes unlabeled (or pre-labeled) examples to a JSON file, the user
 labels/corrects them in this TUI, and the agent reads the results back.
 
-See ``karat/tui/label_app.py`` for the full format documentation and
+See ``karat.tui.label_app`` for the full format documentation and
 ``README.md`` for usage examples.
 """
 
