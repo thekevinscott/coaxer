@@ -63,7 +63,7 @@ With labeled examples:
    from dspy_agent_sdk import AgentLM
    import dspy
 
-   lm = AgentLM(tools=[], max_turns=20)
+   lm = AgentLM(tools=[])
    dspy.configure(lm=lm)
    ```
 
@@ -105,7 +105,6 @@ compiled.load("path/to/optimized.json")
 ## Important
 
 - Always use `tools=[]` with AgentLM for classification/structured-output tasks to prevent the model from exploring the filesystem instead of classifying.
-- Set `max_turns=20` to allow thinking before structured output. With `tools=[]` and `max_turns=1`, thinking gets cut off.
 - The `dspy_agent_sdk` package must be installed: `uv add git+ssh://git@github.com/thekevinscott/dspy-anthropic-agent-sdk.git`
 - The ambiguous examples are the most valuable. Do not skip Phase 3 stratification -- random sampling produces worse optimizations.
 - This is an interactive workflow, not a batch script. Wait for user input at each labeling step.

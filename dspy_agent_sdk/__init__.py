@@ -18,7 +18,7 @@ Quick start::
 For classification and structured output, disable tools to prevent the
 model from exploring the filesystem::
 
-    lm = AgentLM(tools=[], max_turns=20)
+    lm = AgentLM(tools=[])
 
 All keyword arguments are passed through to ClaudeAgentOptions (tools,
 max_turns, allowed_tools, disallowed_tools, env, etc.).

@@ -42,7 +42,7 @@ result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
 
 ```python
 # Strip all tools (recommended for classification/structured output)
-lm = AgentLM(tools=[], max_turns=20)
+lm = AgentLM(tools=[])
 
 # Allow specific tools
 lm = AgentLM(allowed_tools=["Read", "Glob"])

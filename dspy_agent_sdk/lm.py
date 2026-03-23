@@ -22,7 +22,7 @@ class AgentLM(BaseLM):
     For classification or structured output where you don't want the model
     to use filesystem tools, pass tools=[] and max_turns=20::
 
-        lm = AgentLM(tools=[], max_turns=20)
+        lm = AgentLM(tools=[])
 
     The model identifier (default "claude-agent-sdk") is for DSPy's internal
     tracking only -- the actual model is determined by the Claude Code CLI.
