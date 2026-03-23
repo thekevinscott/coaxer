@@ -26,6 +26,9 @@ dev = [
     "cachetta>=0.6.0",
 ]
 
+[project.scripts]
+dspy-agent-sdk = "dspy_agent_sdk.cli:main"
+
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
@@ -38,6 +41,9 @@ local_scheme = "no-local-version"
 
 [tool.hatch.build.targets.wheel]
 packages = ["dspy_agent_sdk"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"dspy_agent_sdk/skills" = "dspy_agent_sdk/skills"
 
 [tool.ruff]
 target-version = "py314"
@@ -54,8 +60,8 @@ max-args = 8
 max-statements = 50
 
 [tool.ruff.lint.per-file-ignores]
-"*_test.py" = ["PLR2004", "PLR0915", "C901"]
-"tests/**/*.py" = ["PLR2004", "PLR0915", "C901"]
+"*_test.py" = ["PLR2004", "PLR0915", "C901", "ARG001"]
+"tests/**/*.py" = ["PLR2004", "PLR0915", "C901", "ARG001"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["dspy_agent_sdk"]

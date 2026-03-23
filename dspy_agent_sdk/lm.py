@@ -1,7 +1,5 @@
 """DSPy language model backed by the Anthropic Agent SDK."""
 
-import hashlib
-import json
 import uuid
 from typing import Any
 
@@ -29,12 +27,13 @@ class AgentLM(BaseLM):
     The model identifier (default "claude-agent-sdk") is for DSPy's internal
     tracking only -- the actual model is determined by the Claude Code CLI.
 
-    Caching: pass a cachetta instance to persist responses across runs.
-    Cache keys are derived from the full prompt + options, so any change
-    to either automatically invalidates the cache::
+    Caching: pass a Cachetta instance to persist responses across runs.
+    Cachetta wraps the query function as a decorator, so the cache key is
+    derived from the prompt argument automatically. Any change to the prompt
+    invalidates the cache::
 
         from cachetta import Cachetta
-        lm = AgentLM(cache=Cachetta(path="./cache", duration="7d"))
+        lm = AgentLM(cache=Cachetta(path=lambda prompt: f"cache/{prompt}.pkl"))
 
     Per-call kwargs override constructor kwargs (shallow merge).
     """
@@ -54,6 +53,12 @@ class AgentLM(BaseLM):
         self.kwargs = kwargs
         self.history: list[dict] = []
 
+        # If cache provided, wrap the query function with cachetta
+        if cache is not None:
+            self._cached_query = cache.wrap(query_assistant_text)
+        else:
+            self._cached_query = None
+
     def forward(
         self,
         prompt: str | None = None,
@@ -69,7 +74,8 @@ class AgentLM(BaseLM):
         extracted_prompt = extract_prompt(prompt, messages)
         merged_opts = {**self.kwargs, **kwargs}
 
-        response_text = self._get_cached_or_query_sync(extracted_prompt, merged_opts)
+        query_fn = self._cached_query or query_assistant_text
+        response_text = run_sync(query_fn(extracted_prompt, **merged_opts))
 
         return self._build_response(extracted_prompt, response_text, kwargs)
 
@@ -83,44 +89,10 @@ class AgentLM(BaseLM):
         extracted_prompt = extract_prompt(prompt, messages)
         merged_opts = {**self.kwargs, **kwargs}
 
-        response_text = await self._get_cached_or_query_async(extracted_prompt, merged_opts)
+        query_fn = self._cached_query or query_assistant_text
+        response_text = await query_fn(extracted_prompt, **merged_opts)
 
         return self._build_response(extracted_prompt, response_text, kwargs)
-
-    def _get_cached_or_query_sync(self, prompt: str, opts: dict) -> str:
-        """Check cache, then query synchronously if not cached."""
-        if self.cache is not None:
-            cache_key = self._cache_key(prompt, opts)
-            cached = run_sync(self.cache.get(cache_key))
-            if cached is not None:
-                return cached
-
-        response_text = run_sync(query_assistant_text(prompt, **opts))
-
-        if self.cache is not None:
-            run_sync(self.cache.set(cache_key, response_text))
-
-        return response_text
-
-    async def _get_cached_or_query_async(self, prompt: str, opts: dict) -> str:
-        """Check cache, then query asynchronously if not cached."""
-        if self.cache is not None:
-            cache_key = self._cache_key(prompt, opts)
-            cached = await self.cache.get(cache_key)
-            if cached is not None:
-                return cached
-
-        response_text = await query_assistant_text(prompt, **opts)
-
-        if self.cache is not None:
-            await self.cache.set(cache_key, response_text)
-
-        return response_text
-
-    def _cache_key(self, prompt: str, opts: dict) -> str:
-        """Build a deterministic cache key from prompt and options."""
-        key_data = json.dumps({"prompt": prompt, "opts": opts}, sort_keys=True, default=str)
-        return f"agent_lm:{hashlib.sha256(key_data.encode()).hexdigest()}"
 
     def _build_response(self, prompt: str, response_text: str, kwargs: dict) -> CompletionResponse:
         """Build a CompletionResponse and update history."""

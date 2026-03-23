@@ -23,10 +23,11 @@ model from exploring the filesystem::
 All keyword arguments are passed through to ClaudeAgentOptions (tools,
 max_turns, allowed_tools, disallowed_tools, env, etc.).
 
-Optional caching via cachetta::
+Optional caching via cachetta (decorator-based, wraps the query function)::
 
     from cachetta import Cachetta
-    lm = AgentLM(cache=Cachetta(path="./cache", duration="7d"))
+    cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
+    lm = AgentLM(cache=cache)
 """
 
 from .lm import AgentLM

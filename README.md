@@ -8,6 +8,16 @@ DSPy language model backed by the Anthropic Agent SDK (Claude Code). Use DSPy's 
 uv add git+ssh://git@github.com/thekevinscott/dspy-anthropic-agent-sdk.git
 ```
 
+### Install the `/optimize` skill (optional)
+
+After installing the package, run:
+
+```bash
+uvx --from git+ssh://git@github.com/thekevinscott/dspy-anthropic-agent-sdk.git dspy-agent-sdk install
+```
+
+This copies the `/optimize` skill into `.claude/skills/optimize/SKILL.md` in your project. The skill lets Claude Code agents optimize DSPy prompts from labeled examples (CSV, TSV, or JSON).
+
 ## Usage
 
 ```python
@@ -43,17 +53,17 @@ lm = AgentLM(env={"CLAUDECODE": ""})
 
 ## Caching
 
-Pass a [cachetta](https://github.com/thekevinscott/cachetta) instance to cache LLM responses across runs:
+Pass a [cachetta](https://github.com/thekevinscott/cachetta) instance to wrap the query function with file-backed caching. Cachetta uses the prompt as the cache key automatically, so prompt changes invalidate the cache:
 
 ```python
 from cachetta import Cachetta
 from dspy_agent_sdk import AgentLM
 
-cache = Cachetta(path="./cache", duration="7d")
+cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
 lm = AgentLM(cache=cache)
 ```
 
-Cache keys are derived from the prompt and all options, so prompt changes automatically invalidate cached results.
+Install with the cache extra: `uv add "dspy-anthropic-agent-sdk[cache] @ git+ssh://..."`
 
 ## Development
 

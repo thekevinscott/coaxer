@@ -1,6 +1,6 @@
 """Tests for AgentLM."""
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -31,6 +31,7 @@ def describe_AgentLM():
             assert lm.model_type == "chat"
             assert lm.max_tokens == 4096
             assert lm.cache is None
+            assert lm._cached_query is None
             assert lm.history == []
 
         def it_accepts_custom_values():
@@ -39,10 +40,13 @@ def describe_AgentLM():
             assert lm.max_tokens == 2048
             assert lm.kwargs["custom_arg"] == "value"
 
-        def it_accepts_cache():
-            mock_cache = object()
+        def it_wraps_query_with_cache():
+            mock_cache = MagicMock()
+            mock_cache.wrap.return_value = "wrapped_fn"
             lm = AgentLM(cache=mock_cache)
             assert lm.cache is mock_cache
+            assert lm._cached_query == "wrapped_fn"
+            mock_cache.wrap.assert_called_once()
 
     def describe_forward():
         def it_calls_query_assistant_text(mock_run_sync):
@@ -84,6 +88,15 @@ def describe_AgentLM():
             call_args = mock_run_sync.call_args
             assert call_args is not None
 
+        def it_uses_cached_query_when_cache_provided(mock_run_sync):
+            mock_run_sync.return_value = "cached result"
+            mock_cache = MagicMock()
+            cached_fn = AsyncMock(return_value="cached result")
+            mock_cache.wrap.return_value = cached_fn
+            lm = AgentLM(cache=mock_cache)
+            result = lm.forward(prompt="test")
+            assert result.choices[0].message.content == "cached result"
+
     def describe_aforward():
         @pytest.mark.asyncio
         async def it_calls_query_assistant_text_async(mock_query_async):
@@ -99,6 +112,16 @@ def describe_AgentLM():
             result = await lm.aforward(messages=[{"role": "user", "content": "Question"}])
             assert result.choices[0].message.content == "Response"
 
+        @pytest.mark.asyncio
+        async def it_uses_cached_query_when_cache_provided(mock_query_async):
+            cached_fn = AsyncMock(return_value="cached async")
+            mock_cache = MagicMock()
+            mock_cache.wrap.return_value = cached_fn
+            lm = AgentLM(cache=mock_cache)
+            result = await lm.aforward(prompt="test")
+            assert result.choices[0].message.content == "cached async"
+            cached_fn.assert_called_once()
+
     def describe_copy():
         def it_returns_new_instance():
             lm = AgentLM(max_tokens=1000)
@@ -113,7 +136,8 @@ def describe_AgentLM():
             assert "extra_arg" not in lm.kwargs
 
         def it_preserves_cache():
-            mock_cache = object()
+            mock_cache = MagicMock()
+            mock_cache.wrap.return_value = "wrapped"
             lm = AgentLM(cache=mock_cache)
             copied = lm.copy()
             assert copied.cache is mock_cache
@@ -129,22 +153,3 @@ def describe_AgentLM():
             assert len(history) == 2
             assert history[0]["prompt"] == "Second"
             assert history[1]["prompt"] == "Third"
-
-    def describe_cache_key():
-        def it_produces_deterministic_keys():
-            lm = AgentLM()
-            key1 = lm._cache_key("hello", {"tools": []})
-            key2 = lm._cache_key("hello", {"tools": []})
-            assert key1 == key2
-
-        def it_varies_with_prompt():
-            lm = AgentLM()
-            key1 = lm._cache_key("hello", {})
-            key2 = lm._cache_key("world", {})
-            assert key1 != key2
-
-        def it_varies_with_opts():
-            lm = AgentLM()
-            key1 = lm._cache_key("hello", {"tools": []})
-            key2 = lm._cache_key("hello", {"max_turns": 5})
-            assert key1 != key2
