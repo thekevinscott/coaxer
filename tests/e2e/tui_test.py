@@ -18,7 +18,11 @@ def sample_input(tmp_path: Path) -> Path:
         "labels": ["collection", "organic"],
         "display_fields": ["repo_name", "description"],
         "examples": [
-            {"repo_name": "awesome-python", "description": "A curated list of awesome Python libs", "id": "1"},
+            {
+                "repo_name": "awesome-python",
+                "description": "A curated list of awesome Python libs",
+                "id": "1",
+            },
             {"repo_name": "flask", "description": "The Python micro framework", "id": "2"},
         ],
     }
@@ -43,7 +47,11 @@ class TestCliLabelCommand:
     def test_cli_label_missing_input_shows_usage(self):
         """Running `karat label` with no args should print usage and exit 1."""
         result = subprocess.run(
-            [sys.executable, "-c", "import sys; sys.argv = ['karat', 'label']; from karat.cli import main; main()"],
+            [
+                sys.executable,
+                "-c",
+                "import sys; sys.argv = ['karat', 'label']; from karat.cli import main; main()",
+            ],
             capture_output=True,
             text=True,
             timeout=10,
@@ -55,7 +63,12 @@ class TestCliLabelCommand:
         """Running `karat label` with a missing file should error."""
         nope = tmp_path / "nope.json"
         result = subprocess.run(
-            [sys.executable, "-c", f"import sys; sys.argv = ['karat', 'label', '{nope}']; from karat.cli import main; main()"],
+            [
+                sys.executable,
+                "-c",
+                f"import sys; sys.argv = ['karat', 'label', '{nope}'];"
+                "from karat.cli import main; main()",
+            ],
             capture_output=True,
             text=True,
             timeout=10,
@@ -82,8 +95,8 @@ async def main():
 asyncio.run(main())
 
 result = json.loads(Path("{output_path}").read_text())
-assert result["examples"][0]["label"] == "collection"
-assert result["examples"][1]["label"] == "organic"
+assert result["examples"][0]["is_collection"] == "collection"
+assert result["examples"][1]["is_collection"] == "organic"
 print("OK")
 """
         result = subprocess.run(

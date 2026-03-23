@@ -19,9 +19,21 @@ def sample_input(tmp_path: Path) -> Path:
         "labels": ["collection", "organic"],
         "display_fields": ["repo_name", "description"],
         "examples": [
-            {"repo_name": "awesome-python", "description": "A curated list of awesome Python libs", "id": "1"},
-            {"repo_name": "flask", "description": "The Python micro framework for building web apps", "id": "2"},
-            {"repo_name": "public-apis", "description": "A collective list of free APIs", "id": "3"},
+            {
+                "repo_name": "awesome-python",
+                "description": "A curated list of awesome Python libs",
+                "id": "1",
+            },
+            {
+                "repo_name": "flask",
+                "description": "The Python micro framework for building web apps",
+                "id": "2",
+            },
+            {
+                "repo_name": "public-apis",
+                "description": "A collective list of free APIs",
+                "id": "3",
+            },
         ],
     }
     p = tmp_path / "examples.json"
@@ -39,14 +51,15 @@ class TestLabelAppMounts:
 
     async def test_app_starts(self, sample_input: Path, output_path: Path):
         app = LabelApp(input_path=sample_input, output_path=output_path)
-        async with app.run_test() as pilot:
+        async with app.run_test():
             table = app.query_one("#table", DataTable)
             assert table.row_count == 3
 
     async def test_shows_status_bar(self, sample_input: Path, output_path: Path):
         app = LabelApp(input_path=sample_input, output_path=output_path)
-        async with app.run_test() as pilot:
+        async with app.run_test():
             from textual.widgets import Static
+
             status = app.query_one("#status", Static)
             rendered = str(status.render())
             assert "0/3" in rendered
@@ -59,13 +72,13 @@ class TestLabeling:
         app = LabelApp(input_path=sample_input, output_path=output_path)
         async with app.run_test() as pilot:
             await pilot.press("1")
-            assert app.assigned[0] == "collection"
+            assert app.assigned[(0, "is_collection")] == "collection"
 
     async def test_press_2_assigns_second_label(self, sample_input: Path, output_path: Path):
         app = LabelApp(input_path=sample_input, output_path=output_path)
         async with app.run_test() as pilot:
             await pilot.press("2")
-            assert app.assigned[0] == "organic"
+            assert app.assigned[(0, "is_collection")] == "organic"
 
     async def test_auto_advances_to_next_unlabeled(self, sample_input: Path, output_path: Path):
         app = LabelApp(input_path=sample_input, output_path=output_path)
@@ -82,7 +95,7 @@ class TestLabeling:
             table.move_cursor(row=0)
             await pilot.pause()
             await pilot.press("u")  # clear it
-            assert app.assigned[0] is None
+            assert app.assigned[(0, "is_collection")] is None
 
 
 class TestSaveAndQuit:
@@ -97,9 +110,9 @@ class TestSaveAndQuit:
 
         assert output_path.exists()
         result = json.loads(output_path.read_text())
-        assert result["examples"][0]["label"] == "collection"
-        assert result["examples"][1]["label"] == "organic"
-        assert result["examples"][2]["label"] is None
+        assert result["examples"][0]["is_collection"] == "collection"
+        assert result["examples"][1]["is_collection"] == "organic"
+        assert result["examples"][2]["is_collection"] is None
 
     async def test_resume_from_existing_output(self, sample_input: Path, output_path: Path):
         """If output file already exists with labels, resume from it."""
@@ -108,7 +121,12 @@ class TestSaveAndQuit:
             "labels": ["collection", "organic"],
             "display_fields": ["repo_name", "description"],
             "examples": [
-                {"repo_name": "awesome-python", "description": "...", "id": "1", "label": "collection"},
+                {
+                    "repo_name": "awesome-python",
+                    "description": "...",
+                    "id": "1",
+                    "label": "collection",
+                },
                 {"repo_name": "flask", "description": "...", "id": "2", "label": None},
                 {"repo_name": "public-apis", "description": "...", "id": "3", "label": "organic"},
             ],
@@ -116,17 +134,221 @@ class TestSaveAndQuit:
         output_path.write_text(json.dumps(existing))
 
         app = LabelApp(input_path=sample_input, output_path=output_path)
+        async with app.run_test():
+            assert app.assigned[(0, "is_collection")] == "collection"
+            assert app.assigned[(2, "is_collection")] == "organic"
+
+
+@pytest.fixture
+def multi_field_input(tmp_path: Path) -> Path:
+    data = {
+        "label_fields": [
+            {"name": "language", "labels": ["Python", "JavaScript", "Rust"]},
+            {"name": "is_collection", "labels": ["true", "false"]},
+        ],
+        "display_fields": ["repo_name", "description"],
+        "examples": [
+            {"repo_name": "awesome-python", "description": "A curated list", "id": "1"},
+            {"repo_name": "flask", "description": "Web framework", "id": "2"},
+            {"repo_name": "public-apis", "description": "Free APIs list", "id": "3"},
+        ],
+    }
+    p = tmp_path / "multi.json"
+    p.write_text(json.dumps(data))
+    return p
+
+
+@pytest.fixture
+def pre_populated_input(tmp_path: Path) -> Path:
+    data = {
+        "label_fields": [
+            {"name": "language", "labels": ["Python", "JavaScript", "Rust"]},
+            {"name": "is_collection", "labels": ["true", "false"]},
+        ],
+        "display_fields": ["repo_name", "description"],
+        "examples": [
+            {
+                "repo_name": "awesome-python",
+                "description": "A curated list",
+                "id": "1",
+                "language": "Python",
+                "is_collection": "true",
+            },
+            {"repo_name": "flask", "description": "Web framework", "id": "2", "language": "Python"},
+            {"repo_name": "public-apis", "description": "Free APIs list", "id": "3"},
+        ],
+    }
+    p = tmp_path / "prepop.json"
+    p.write_text(json.dumps(data))
+    return p
+
+
+class TestMultiFieldDataModel:
+    """Multi-field labeling: new label_fields format."""
+
+    async def test_multi_field_app_starts(self, multi_field_input: Path, output_path: Path):
+        """App should mount with multiple label fields as columns."""
+        app = LabelApp(input_path=multi_field_input, output_path=output_path)
+        async with app.run_test():
+            table = app.query_one("#table", DataTable)
+            assert table.row_count == 3
+            # Should have label_fields attribute with both fields
+            assert len(app.label_fields) == 2
+            assert app.label_fields[0]["name"] == "language"
+            assert app.label_fields[1]["name"] == "is_collection"
+
+    async def test_backward_compat_single_field(self, sample_input: Path, output_path: Path):
+        """Old format with label_field (singular) should still work."""
+        app = LabelApp(input_path=sample_input, output_path=output_path)
+        async with app.run_test():
+            table = app.query_one("#table", DataTable)
+            assert table.row_count == 3
+            assert len(app.label_fields) == 1
+            assert app.label_fields[0]["name"] == "is_collection"
+            assert app.label_fields[0]["labels"] == ["collection", "organic"]
+
+    async def test_pre_populated_values_loaded(self, pre_populated_input: Path, output_path: Path):
+        """Examples with existing label values should be pre-loaded into assigned."""
+        app = LabelApp(input_path=pre_populated_input, output_path=output_path)
+        async with app.run_test():
+            # Row 0 has both fields pre-populated
+            assert app.assigned[(0, "language")] == "Python"
+            assert app.assigned[(0, "is_collection")] == "true"
+            # Row 1 has only language
+            assert app.assigned[(1, "language")] == "Python"
+            assert (1, "is_collection") not in app.assigned
+            # Row 2 has nothing
+            assert (2, "language") not in app.assigned
+            assert (2, "is_collection") not in app.assigned
+
+    async def test_save_writes_all_label_fields(self, multi_field_input: Path, output_path: Path):
+        """Save should write all label field values back to examples."""
+        app = LabelApp(input_path=multi_field_input, output_path=output_path)
+        async with app.run_test():
+            # Manually assign some labels
+            app.assigned[(0, "language")] = "Python"
+            app.assigned[(0, "is_collection")] = "true"
+            app.assigned[(1, "language")] = "Rust"
+            app._save()
+
+        result = json.loads(output_path.read_text())
+        assert result["examples"][0]["language"] == "Python"
+        assert result["examples"][0]["is_collection"] == "true"
+        assert result["examples"][1]["language"] == "Rust"
+        assert result["examples"][1].get("is_collection") is None
+        assert result["examples"][2].get("language") is None
+
+
+class TestCellNavigation:
+    """Multi-field mode uses cell cursor for spreadsheet-style editing."""
+
+    async def test_cell_cursor_mode(self, multi_field_input: Path, output_path: Path):
+        """Multi-field should use cell cursor, not row cursor."""
+        app = LabelApp(input_path=multi_field_input, output_path=output_path)
+        async with app.run_test():
+            table = app.query_one("#table", DataTable)
+            assert table.cursor_type == "cell"
+
+    async def test_single_field_stays_row_cursor(self, sample_input: Path, output_path: Path):
+        """Single-field mode should keep row cursor."""
+        app = LabelApp(input_path=sample_input, output_path=output_path)
+        async with app.run_test():
+            table = app.query_one("#table", DataTable)
+            assert table.cursor_type == "row"
+
+    async def test_enter_on_label_cell_with_few_labels(
+        self, multi_field_input: Path, output_path: Path
+    ):
+        """Enter on a label cell with <=9 labels should open search (in multi-field mode)."""
+        app = LabelApp(input_path=multi_field_input, output_path=output_path)
         async with app.run_test() as pilot:
-            assert app.assigned[0] == "collection"
-            assert app.assigned[2] == "organic"
+            app.query_one("#table", DataTable)
+            # Navigate to the first label column (language)
+            # Columns: # | repo_name | description | language | is_collection
+            # Move right to language column
+            label_col_idx = 1 + len(app.display_fields)  # skip # and display fields
+            for _ in range(label_col_idx):
+                await pilot.press("right")
+            await pilot.pause()
+            await pilot.press("enter")
+            await pilot.pause()
+            from textual.widgets import Input
+
+            search = app.query_one("#label-search", Input)
+            assert search.display is True
+
+    async def test_enter_on_display_cell_noop(self, multi_field_input: Path, output_path: Path):
+        """Enter on a display cell should not open search or assign a label."""
+        app = LabelApp(input_path=multi_field_input, output_path=output_path)
+        async with app.run_test() as pilot:
+            # Cursor starts at (0, 0) which is the # column (display)
+            await pilot.press("enter")
+            await pilot.pause()
+            assert (0, "language") not in app.assigned or app.assigned[(0, "language")] is None
+
+    async def test_tab_moves_between_label_columns(
+        self, multi_field_input: Path, output_path: Path
+    ):
+        """Tab should move between label columns in the same row."""
+        app = LabelApp(input_path=multi_field_input, output_path=output_path)
+        async with app.run_test() as pilot:
+            table = app.query_one("#table", DataTable)
+            # Navigate to first label column
+            label_col_idx = 1 + len(app.display_fields)
+            for _ in range(label_col_idx):
+                await pilot.press("right")
+            await pilot.pause()
+            col_before = table.cursor_column
+            await pilot.press("tab")
+            await pilot.pause()
+            col_after = table.cursor_column
+            assert col_after == col_before + 1  # moved to next label column
 
 
 LANGUAGES = [
-    "Python", "JavaScript", "TypeScript", "Ruby", "Go", "Rust", "Java", "C", "C++",
-    "C#", "PHP", "Swift", "Kotlin", "Scala", "Haskell", "Elixir", "Clojure", "Lua",
-    "R", "Julia", "Perl", "Shell", "PowerShell", "Dart", "Objective-C", "MATLAB",
-    "Groovy", "F#", "Erlang", "OCaml", "Zig", "Nim", "Crystal", "V", "Fortran",
-    "COBOL", "Ada", "Pascal", "Prolog", "Lisp", "Scheme", "Racket", "Assembly",
+    "Python",
+    "JavaScript",
+    "TypeScript",
+    "Ruby",
+    "Go",
+    "Rust",
+    "Java",
+    "C",
+    "C++",
+    "C#",
+    "PHP",
+    "Swift",
+    "Kotlin",
+    "Scala",
+    "Haskell",
+    "Elixir",
+    "Clojure",
+    "Lua",
+    "R",
+    "Julia",
+    "Perl",
+    "Shell",
+    "PowerShell",
+    "Dart",
+    "Objective-C",
+    "MATLAB",
+    "Groovy",
+    "F#",
+    "Erlang",
+    "OCaml",
+    "Zig",
+    "Nim",
+    "Crystal",
+    "V",
+    "Fortran",
+    "COBOL",
+    "Ada",
+    "Pascal",
+    "Prolog",
+    "Lisp",
+    "Scheme",
+    "Racket",
+    "Assembly",
 ]
 
 
@@ -138,7 +360,11 @@ def many_labels_input(tmp_path: Path) -> Path:
         "display_fields": ["skill_name", "url"],
         "examples": [
             {"skill_name": "web-scraper", "url": "https://github.com/foo/bar/SKILL.md", "id": "1"},
-            {"skill_name": "data-pipeline", "url": "https://github.com/baz/qux/SKILL.md", "id": "2"},
+            {
+                "skill_name": "data-pipeline",
+                "url": "https://github.com/baz/qux/SKILL.md",
+                "id": "2",
+            },
             {"skill_name": "api-client", "url": "https://github.com/abc/def/SKILL.md", "id": "3"},
         ],
     }
@@ -150,13 +376,15 @@ def many_labels_input(tmp_path: Path) -> Path:
 class TestManyLabels:
     """With >9 labels, the app should use a searchable filter instead of number keys."""
 
-    async def test_uses_search_mode_for_many_labels(self, many_labels_input: Path, output_path: Path):
+    async def test_uses_search_mode_for_many_labels(
+        self, many_labels_input: Path, output_path: Path
+    ):
         """Number keys should NOT assign labels when there are >9 labels."""
         app = LabelApp(input_path=many_labels_input, output_path=output_path)
         async with app.run_test() as pilot:
             await pilot.press("1")
             # With >9 labels, pressing "1" should NOT assign a label
-            assert 0 not in app.assigned or app.assigned[0] is None
+            assert (0, "language") not in app.assigned or app.assigned[(0, "language")] is None
 
     async def test_enter_opens_search(self, many_labels_input: Path, output_path: Path):
         """Pressing Enter should open a search/filter input."""
@@ -165,6 +393,7 @@ class TestManyLabels:
             await pilot.press("enter")
             # A search input should be visible
             from textual.widgets import Input
+
             search = app.query_one("#label-search", Input)
             assert search.display is True
 
@@ -178,7 +407,7 @@ class TestManyLabels:
             await pilot.pause()
             await pilot.press("enter")  # select top match (Python)
             await pilot.pause()
-            assert app.assigned[0] == "Python"
+            assert app.assigned[(0, "language")] == "Python"
 
     async def test_escape_cancels_search(self, many_labels_input: Path, output_path: Path):
         """Pressing Escape during search should cancel without labeling."""
@@ -187,15 +416,18 @@ class TestManyLabels:
             await pilot.press("enter")  # open search
             await pilot.press("p", "y")
             await pilot.press("escape")  # cancel
-            assert 0 not in app.assigned or app.assigned[0] is None
+            assert (0, "language") not in app.assigned or app.assigned[(0, "language")] is None
 
-    async def test_first_option_highlighted_on_open(self, many_labels_input: Path, output_path: Path):
+    async def test_first_option_highlighted_on_open(
+        self, many_labels_input: Path, output_path: Path
+    ):
         """When search opens, the first option should already be highlighted."""
         app = LabelApp(input_path=many_labels_input, output_path=output_path)
         async with app.run_test() as pilot:
             await pilot.press("enter")
             await pilot.pause()
             from textual.widgets import OptionList
+
             opts = app.query_one("#label-options", OptionList)
             assert opts.highlighted == 0
 
@@ -210,7 +442,7 @@ class TestManyLabels:
             await pilot.press("enter")  # select it
             await pilot.pause()
             # First option is "Python" (index 0), down once -> "JavaScript" (index 1)
-            assert app.assigned[0] == "JavaScript"
+            assert app.assigned[(0, "language")] == "JavaScript"
 
     async def test_arrow_keys_with_filter(self, many_labels_input: Path, output_path: Path):
         """Arrow keys should work within filtered results."""
@@ -226,10 +458,9 @@ class TestManyLabels:
             await pilot.pause()
             # Filtered "r" labels in order: R, Racket, Rescript, Ruby, Rust, Red, Rebol, Ring
             # First is "R", down once -> second match
-            from textual.widgets import OptionList
             # Just verify something was assigned (exact order depends on label list order)
-            assert 0 in app.assigned
-            assert app.assigned[0] != "Python"  # definitely not Python
+            assert (0, "language") in app.assigned
+            assert app.assigned[(0, "language")] != "Python"  # definitely not Python
 
     async def test_search_saves_correctly(self, many_labels_input: Path, output_path: Path):
         """Labels assigned via search should save in output JSON."""
@@ -244,4 +475,4 @@ class TestManyLabels:
             await pilot.press("q")  # save & quit
 
         result = json.loads(output_path.read_text())
-        assert result["examples"][0]["label"] == "Rust"
+        assert result["examples"][0]["language"] == "Rust"

@@ -45,6 +45,7 @@ packages = ["karat"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "karat/skills" = "karat/skills"
+"karat/tui/label_app.tcss" = "karat/tui/label_app.tcss"
 
 [tool.ruff]
 target-version = "py314"

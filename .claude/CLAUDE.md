@@ -53,14 +53,15 @@ karat/                   # Main package
   skills/optimize/       # /optimize skill (SKILL.md, installed via CLI)
   lm.py                  # AgentLM - DSPy LM backed by Agent SDK
   load_predict.py        # Load optimized DSPy programs with fallback
-  tui.py                 # Textual labeling TUI
+  tui.py                 # Textual labeling TUI (multi-field, pre-population)
   cli.py                 # CLI entry point (karat install, karat label)
   for_query.py           # Async generator over SDK query blocks
   query_assistant_text.py # Extract text from assistant responses
   extract_prompt.py      # Normalize DSPy prompt formats
   dataclasses.py         # OpenAI-compatible response types
 tests/
-  integration/           # Integration tests (mocked SDK)
+  integration/           # Integration tests (TUI pilot, mocked SDK)
+  e2e/                   # End-to-end tests (subprocess CLI)
 ```
 
 ## Key Commands

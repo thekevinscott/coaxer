@@ -57,7 +57,35 @@ For interactive labeling in a separate terminal:
 karat label examples.json --output labeled.json
 ```
 
-The agent writes unlabeled examples to a JSON file, the user labels them in the TUI, and the agent picks up the results. See `karat label --help` for the input format.
+The agent writes examples to a JSON file, the user labels them in the TUI, and the agent reads the results back.
+
+### Input format
+
+```json
+{
+  "label_fields": [
+    {"name": "language", "labels": ["Python", "JavaScript", "Rust"]},
+    {"name": "is_collection", "labels": ["true", "false"]}
+  ],
+  "display_fields": ["repo_name", "url", "description"],
+  "examples": [
+    {"repo_name": "awesome-python", "url": "https://...", "description": "A curated list",
+     "language": "Python"}
+  ]
+}
+```
+
+- **`label_fields`**: one or more fields to label, each with a name and allowed values
+- **`display_fields`**: read-only columns shown for context
+- **Pre-populated values**: if an example already has a value for a label field (e.g. from an agent's first pass), it's shown as editable default
+
+### Interaction
+
+- **Single field, <=9 labels**: number keys assign directly
+- **Single field, >9 labels**: Enter opens searchable filter, type to narrow
+- **Multiple fields**: spreadsheet-style cell cursor, Enter on a label cell opens search, Tab/Shift+Tab move between label columns
+
+A single-field shorthand format (`label_field` + `labels` instead of `label_fields`) is also supported for backward compatibility.
 
 ## Options
 

@@ -1,0 +1,37 @@
+Screen {
+    layout: vertical;
+}
+
+#status {
+    height: 1;
+    dock: top;
+    padding: 0 1;
+}
+
+#detail {
+    height: auto;
+    max-height: 40%;
+    padding: 1 2;
+    border: solid $primary;
+}
+
+DataTable {
+    height: 1fr;
+}
+
+#search-panel {
+    height: auto;
+    max-height: 50%;
+    dock: bottom;
+    padding: 1 2;
+    border: solid $accent;
+}
+
+#label-search {
+    margin-bottom: 1;
+}
+
+#label-options {
+    height: auto;
+    max-height: 10;
+}
