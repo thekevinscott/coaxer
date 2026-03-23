@@ -39,18 +39,45 @@ Do NOT just random-sample. Use the LM itself to do a rough classification pass o
 
 3. **Present ambiguous examples first.** These are where human labels add the most value. Easy cases don't teach the model anything -- boundary cases are where prompt tuning matters.
 
-## Phase 4: Collect Labels Interactively
+## Phase 4: Collect Labels via TUI
 
-Present examples one group at a time, not all at once. For each example:
-- Show the input fields (and URLs or links if available, so the user can inspect the source)
-- Ask for the output label
-- Allow the user to:
-  - **Skip** an example (exclude from training)
-  - **Mark as genuinely ambiguous** (exclude from training)
-  - **Correct** a previous label
-  - **Add context** ("this is a collection because...")
+Use `karat label` to collect human labels. You write a JSON file with your pre-populated first-pass labels, the user reviews and corrects them in the TUI in a separate terminal.
 
-Keep a running tally of collected labels.
+1. **Write the labeling file.** Create a JSON file with your sampled examples and pre-populated predictions:
+
+```json
+{
+  "label_fields": [
+    {"name": "is_collection", "labels": ["true", "false"]}
+  ],
+  "display_fields": ["repo_name", "url", "description"],
+  "examples": [
+    {"repo_name": "awesome-python", "url": "https://...", "description": "A curated list",
+     "is_collection": "true"},
+    {"repo_name": "flask", "url": "https://...", "description": "Web framework",
+     "is_collection": "false"}
+  ]
+}
+```
+
+For multiple output fields, add more entries to `label_fields`:
+```json
+"label_fields": [
+  {"name": "language", "labels": ["Python", "JavaScript", "Rust", ...]},
+  {"name": "is_collection", "labels": ["true", "false"]}
+]
+```
+
+Pre-populated values (from your Phase 3 rough classification) appear as editable defaults in the TUI. The human corrects mistakes rather than labeling from scratch.
+
+2. **Tell the user to run the TUI** in a separate terminal:
+```bash
+karat label examples.json --output labeled.json
+```
+
+3. **Wait for the user to finish labeling.** The TUI saves results to the output file. The user will tell you when they're done, or you can check if the output file has been written/updated.
+
+4. **Read the labeled output.** Parse the output JSON -- each example will have the label field values filled in (or `null` if skipped).
 
 ## Phase 5: Run DSPy Optimization
 
