@@ -36,6 +36,19 @@ classify = dspy.Predict(Classify)
 result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
 ```
 
+## Loading Optimized Programs
+
+After running `/optimize`, load the compiled program with `load_predict`:
+
+```python
+from dspy_agent_sdk import load_predict
+from my_sigs import ClassifyRepo
+
+# Loads optimized JSON if it exists, falls back to unoptimized
+classify = load_predict(ClassifyRepo, path="data/optimized_classify_repo.json")
+result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
+```
+
 ## Options
 
 `AgentLM` passes all keyword arguments through to `ClaudeAgentOptions`:

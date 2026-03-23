@@ -50,7 +50,10 @@ uv run just ci               # Full local CI (lint + format + typecheck + tests)
 ```
 dspy_agent_sdk/          # Main package
   _internal/             # Private utilities (run_sync, etc.)
+  skills/optimize/       # /optimize skill (SKILL.md, installed via CLI)
   lm.py                  # AgentLM - the main DSPy LM class
+  load_predict.py        # Load optimized DSPy programs with fallback
+  cli.py                 # CLI entry point (dspy-agent-sdk install)
   for_query.py           # Async generator over SDK query blocks
   query_assistant_text.py # Extract text from assistant responses
   extract_prompt.py      # Normalize DSPy prompt formats

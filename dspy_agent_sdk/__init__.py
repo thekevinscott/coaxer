@@ -23,6 +23,11 @@ model from exploring the filesystem::
 All keyword arguments are passed through to ClaudeAgentOptions (tools,
 max_turns, allowed_tools, disallowed_tools, env, etc.).
 
+Load optimized programs saved by the /optimize skill::
+
+    from dspy_agent_sdk import load_predict
+    classify = load_predict(ClassifyRepo, path="data/optimized.json")
+
 Optional caching via cachetta (decorator-based, wraps the query function)::
 
     from cachetta import Cachetta
@@ -31,7 +36,9 @@ Optional caching via cachetta (decorator-based, wraps the query function)::
 """
 
 from .lm import AgentLM
+from .load_predict import load_predict
 
 __all__ = [
     "AgentLM",
+    "load_predict",
 ]
