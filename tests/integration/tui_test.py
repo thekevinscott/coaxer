@@ -279,7 +279,9 @@ class TestUnifiedFields:
         return p
 
     async def test_app_parses_unified_fields(
-        self, unified_input: Path, output_path: Path,
+        self,
+        unified_input: Path,
+        output_path: Path,
     ):
         """Should parse unified fields format."""
         app = LabelApp(input_path=unified_input, output_path=output_path)
@@ -288,7 +290,9 @@ class TestUnifiedFields:
             assert app.label_fields[0]["name"] == "includes_what"
 
     async def test_table_excludes_hidden_columns(
-        self, unified_input: Path, output_path: Path,
+        self,
+        unified_input: Path,
+        output_path: Path,
     ):
         """Fields with table=False should not appear as table columns."""
         app = LabelApp(input_path=unified_input, output_path=output_path)
@@ -301,7 +305,9 @@ class TestUnifiedFields:
             assert "label:includes_what" in col_keys
 
     async def test_detail_preserves_field_order(
-        self, unified_input: Path, output_path: Path,
+        self,
+        unified_input: Path,
+        output_path: Path,
     ):
         """Detail panel should show fields in their declared order."""
         app = LabelApp(input_path=unified_input, output_path=output_path)
@@ -324,7 +330,9 @@ class TestUnifiedFields:
             assert when_reason_pos < when_pos
 
     async def test_detail_hides_fields_with_detail_false(
-        self, tmp_path: Path, output_path: Path,
+        self,
+        tmp_path: Path,
+        output_path: Path,
     ):
         """Fields with detail=False should not appear in detail panel."""
         data = {
@@ -349,7 +357,9 @@ class TestUnifiedFields:
             assert "internal_id" not in rendered
 
     async def test_defaults_table_and_detail_to_true(
-        self, tmp_path: Path, output_path: Path,
+        self,
+        tmp_path: Path,
+        output_path: Path,
     ):
         """Fields without explicit table/detail should default to True."""
         data = {
@@ -391,7 +401,9 @@ class TestClickableUrls:
         return p
 
     async def test_url_cell_is_rich_text_with_link(
-        self, url_input: Path, output_path: Path,
+        self,
+        url_input: Path,
+        output_path: Path,
     ):
         """URL cells should be Rich Text objects with link style."""
         from rich.text import Text
@@ -410,7 +422,9 @@ class TestResumeEdgeCases:
     """Resume should handle unexpected output file formats gracefully."""
 
     async def test_resume_ignores_non_dict_output(
-        self, sample_input: Path, output_path: Path,
+        self,
+        sample_input: Path,
+        output_path: Path,
     ):
         """If output file is a plain list (not a dict), ignore it."""
         output_path.write_text('[{"repo_name": "foo", "label": "collection"}]')
@@ -420,7 +434,9 @@ class TestResumeEdgeCases:
             assert (0, "is_collection") not in app.assigned
 
     async def test_resume_ignores_invalid_json(
-        self, sample_input: Path, output_path: Path,
+        self,
+        sample_input: Path,
+        output_path: Path,
     ):
         """If output file contains invalid JSON, ignore it."""
         output_path.write_text("not json at all")
@@ -496,7 +512,9 @@ class TestCellNavigation:
             assert col_after == col_before + 1  # moved to next label column
 
     async def test_unlabel_clears_current_cell_not_first(
-        self, multi_field_input: Path, output_path: Path,
+        self,
+        multi_field_input: Path,
+        output_path: Path,
     ):
         """u should clear the label under the cursor, not always the first field."""
         app = LabelApp(input_path=multi_field_input, output_path=output_path)
@@ -518,7 +536,9 @@ class TestCellNavigation:
             assert app.assigned[(0, "language")] == "Python"
 
     async def test_shift_u_clears_entire_row(
-        self, multi_field_input: Path, output_path: Path,
+        self,
+        multi_field_input: Path,
+        output_path: Path,
     ):
         """Shift+U should clear all labels on the current row."""
         app = LabelApp(input_path=multi_field_input, output_path=output_path)

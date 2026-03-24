@@ -26,7 +26,7 @@ def load_predict(signature: type, path: str | Path | None = None) -> dspy.Predic
         classify = load_predict(ClassifyRepo, path="data/optimized_classify_repo.json")
         result = classify(readme="...")
     """
-    predict = dspy.Predict(signature)
+    predict = dspy.Predict(signature)  # type: ignore[arg-type]
 
     if path is not None:
         resolved = Path(path)
