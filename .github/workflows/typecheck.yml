@@ -16,6 +16,8 @@ on:
 jobs:
   typecheck:
     runs-on: ubuntu-latest
+    env:
+      UV_FROZEN: "1"
     steps:
       - uses: actions/checkout@v6
 

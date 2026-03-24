@@ -69,12 +69,14 @@ def _parse_input(data: dict) -> tuple[list[dict], list[dict]]:
     if "fields" in data:
         fields = []
         for f in data["fields"]:
-            fields.append({
-                "name": f["name"],
-                "table": f.get("table", True),
-                "detail": f.get("detail", True),
-                "labels": f.get("labels"),
-            })
+            fields.append(
+                {
+                    "name": f["name"],
+                    "table": f.get("table", True),
+                    "detail": f.get("detail", True),
+                    "labels": f.get("labels"),
+                }
+            )
         return fields, examples
 
     # Legacy formats -> convert to unified
@@ -88,16 +90,23 @@ def _parse_input(data: dict) -> tuple[list[dict], list[dict]]:
 
     fields = []
     for df in display_fields:
-        fields.append({
-            "name": df, "table": True, "detail": True, "labels": None,
-        })
+        fields.append(
+            {
+                "name": df,
+                "table": True,
+                "detail": True,
+                "labels": None,
+            }
+        )
     for lf in label_fields:
-        fields.append({
-            "name": lf["name"],
-            "table": True,
-            "detail": True,
-            "labels": lf["labels"],
-        })
+        fields.append(
+            {
+                "name": lf["name"],
+                "table": True,
+                "detail": True,
+                "labels": lf["labels"],
+            }
+        )
     return fields, examples
 
 
@@ -127,11 +136,13 @@ def _load_assigned(
     if output_path.exists():
         try:
             existing = json.loads(output_path.read_text())
-        except (json.JSONDecodeError, ValueError):
+        except json.JSONDecodeError, ValueError:
             existing = None
         if isinstance(existing, dict):
             _extract_labels(
-                existing.get("examples", []), label_fields, assigned,
+                existing.get("examples", []),
+                label_fields,
+                assigned,
             )
             # Backward compat: old format uses "label" key
             if len(label_fields) == 1:
@@ -173,26 +184,26 @@ class LabelApp(App):
         # Derived views
         self.label_fields = [f for f in self._fields if f.get("labels")]
         self._table_fields = [f for f in self._fields if f.get("table", True)]
-        self._detail_fields = [
-            f for f in self._fields if f.get("detail", True)
-        ]
+        self._detail_fields = [f for f in self._fields if f.get("detail", True)]
 
-        self.labels: list[str] = (
-            self.label_fields[0]["labels"] if self.label_fields else []
-        )
+        self.labels: list[str] = self.label_fields[0]["labels"] if self.label_fields else []
         self._use_number_keys = (
-            len(self.label_fields) == 1
-            and len(self.labels) <= MAX_NUMBER_KEY_LABELS
+            len(self.label_fields) == 1 and len(self.labels) <= MAX_NUMBER_KEY_LABELS
         )
         self.assigned = _load_assigned(
-            self.examples, self.label_fields, output_path,
+            self.examples,
+            self.label_fields,
+            output_path,
         )
 
         if self._use_number_keys:
             for i, label in enumerate(self.labels):
                 key = str(i + 1)
                 self._bindings.bind(
-                    key, f"label_{i}", f"[{key}] {label}", show=True,
+                    key,
+                    f"label_{i}",
+                    f"[{key}] {label}",
+                    show=True,
                 )
 
     def compose(self) -> ComposeResult:
@@ -203,7 +214,8 @@ class LabelApp(App):
         yield Static(id="detail")
         with Vertical(id="search-panel"):
             yield Input(
-                id="label-search", placeholder="Type to filter labels...",
+                id="label-search",
+                placeholder="Type to filter labels...",
             )
             yield OptionList(id="label-options")
         yield Footer()
@@ -220,7 +232,7 @@ class LabelApp(App):
                 table.add_column(f["name"], key=f["name"])
 
         for i, ex in enumerate(self.examples):
-            row = [str(i + 1)]
+            row: list[str | Text] = [str(i + 1)]
             for f in self._table_fields:
                 if f.get("labels"):
                     row.append(
@@ -253,32 +265,20 @@ class LabelApp(App):
         for field in self.label_fields:
             fname = field["name"]
             labeled = sum(
-                1
-                for i in range(len(self.examples))
-                if self.assigned.get((i, fname)) is not None
+                1 for i in range(len(self.examples)) if self.assigned.get((i, fname)) is not None
             )
             parts.append(f"{fname}: {labeled}/{len(self.examples)}")
         status = " | ".join(parts)
         if self._use_number_keys:
-            keys = " ".join(
-                f"[{i + 1}]={label}"
-                for i, label in enumerate(self.labels)
-            )
-            status += (
-                f"  |  Keys: {keys}  [s]=skip  [u]=clear  [q]=save & quit"
-            )
+            keys = " ".join(f"[{i + 1}]={label}" for i, label in enumerate(self.labels))
+            status += f"  |  Keys: {keys}  [s]=skip  [u]=clear  [q]=save & quit"
         else:
-            status += (
-                "  |  [Enter]=search labels  [s]=skip  [u]=clear"
-                "  [q]=save & quit"
-            )
+            status += "  |  [Enter]=search labels  [s]=skip  [u]=clear  [q]=save & quit"
         self.query_one("#status", Static).update(status)
 
     def _update_detail(self) -> None:
         table = self.query_one("#table", DataTable)
-        if table.cursor_row is not None and table.cursor_row < len(
-            self.examples
-        ):
+        if table.cursor_row is not None and table.cursor_row < len(self.examples):
             ex = self.examples[table.cursor_row]
             lines = []
             for f in self._detail_fields:
@@ -328,9 +328,7 @@ class LabelApp(App):
         fname = self._active_field_name()
         self.assigned[(row_idx, fname)] = label
         display = label or "---"
-        col_key = (
-            f"label:{fname}" if len(self.label_fields) > 1 else "label"
-        )
+        col_key = f"label:{fname}" if len(self.label_fields) > 1 else "label"
         table.update_cell(str(row_idx), col_key, display)
         self._update_status()
         self._auto_advance()
@@ -415,7 +413,8 @@ class LabelApp(App):
 
     @on(OptionList.OptionSelected, "#label-options")
     def _on_option_selected(
-        self, event: OptionList.OptionSelected,
+        self,
+        event: OptionList.OptionSelected,
     ) -> None:
         self._apply_label_to_field(str(event.option.prompt))
         self._close_search()
@@ -427,9 +426,7 @@ class LabelApp(App):
         if row_idx is None or row_idx >= len(self.examples):
             return
         self.assigned[(row_idx, field_name)] = label
-        col_key = (
-            f"label:{field_name}" if len(self.label_fields) > 1 else "label"
-        )
+        col_key = f"label:{field_name}" if len(self.label_fields) > 1 else "label"
         table.update_cell(str(row_idx), col_key, label)
         self._update_status()
         self._auto_advance()
@@ -477,11 +474,7 @@ class LabelApp(App):
         for field in self.label_fields:
             fname = field["name"]
             self.assigned[(row_idx, fname)] = None
-            col_key = (
-                f"label:{fname}"
-                if len(self.label_fields) > 1
-                else "label"
-            )
+            col_key = f"label:{fname}" if len(self.label_fields) > 1 else "label"
             table.update_cell(str(row_idx), col_key, "---")
         self._update_status()
 
