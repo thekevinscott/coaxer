@@ -6,6 +6,17 @@ Evals-first prompt optimization. Label examples, get better prompts.
 
 - **All scratch/debug Python scripts must go to `/tmp`**. Never run `python -c` or `python3 -c` inline. Write to `/tmp/karat-*.py` and execute that.
 
+## Skill Development (Evals-Driven)
+
+**Never modify SKILL.md directly.** Use an evals-driven approach:
+
+1. Write a skillet eval (YAML in `evals/`) that captures the desired behavior
+2. Run `CLAUDECODE="" uv run skillet eval evals/<name> karat/skills/optimize` to verify it fails
+3. Run `CLAUDECODE="" uv run skillet tune evals/<name> karat/skills/optimize` to auto-improve the skill
+4. Verify the eval passes after tuning
+
+All skill improvements must be driven by evals. If something is wrong with agent behavior, the fix is a new eval + tune cycle, not a manual SKILL.md edit.
+
 ## Workflow
 
 - Work in git worktrees under `.worktrees/`, tie PRs to GitHub issues
