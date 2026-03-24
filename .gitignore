@@ -21,3 +21,10 @@ tmp/
 
 # Local issue tracking
 .beads/
+
+# Eval run output files (written by skillet eval to project root)
+/sentiment*.json
+/repos*.json
+/language*.json
+/code_snippets*.json
+/github_repos*.json

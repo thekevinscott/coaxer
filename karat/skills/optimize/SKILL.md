@@ -100,14 +100,19 @@ For multiple output fields:
 
 ### Step 2: Tell the user to run the TUI
 
-```bash
-karat label <input.json> --output <output.json>
+After writing the JSON file, you MUST tell the user the exact command to run in a separate terminal. Always include the `--output` flag with a concrete output path:
+
+```
+karat label /path/to/labels.json --output /path/to/labeled_output.json
 ```
 
-- `--output` / `-o`: path for labeled results. Defaults to `<input>_labeled.json` if omitted.
-- **Resume**: if the output file already exists, the TUI loads previous labels and continues from where the user left off. The user can safely quit and resume later.
-- The TUI saves on quit (press `q`).
-- **Resume**: if the output file already exists, the TUI loads previous labels and continues where the user left off.
+Replace the paths with the actual file paths you used. For example, if you wrote the file to `sentiment_labels.json`:
+
+```
+karat label sentiment_labels.json --output sentiment_labeled.json
+```
+
+The `--output` flag specifies where labeled results will be saved. The TUI saves on quit (press `q`). If the output file already exists, the TUI resumes from previous labels.
 
 ### Step 3: Wait for labeled output
 

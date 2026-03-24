@@ -51,6 +51,10 @@ uv run just ci               # Full local CI (lint + format + typecheck + tests)
 - **Type hints**: Prefer fixing issues over `# type: ignore`
 - **Module organization**: `_internal/` for private utilities
 
+## Changelog
+
+Maintain `CHANGELOG.md` at the repo root. Every commit that changes user-facing behavior must add an entry under an `## Unreleased` section. On release, rename `Unreleased` to the version number.
+
 ## Commit Convention (Conventional Commits)
 
 - `feat:` -- New user-facing functionality
