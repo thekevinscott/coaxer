@@ -48,6 +48,24 @@ def describe_for_query():
             assert blocks[0].text == "text content"
 
     @pytest.mark.asyncio
+    async def it_raises_on_error_result_message():
+        from claude_agent_sdk import ResultMessage
+
+        error_msg = MagicMock(spec=ResultMessage)
+        error_msg.is_error = True
+        error_msg.result = "You've hit your limit · resets 1pm"
+
+        async def mock_query_gen(*_args, **_kwargs):
+            yield error_msg
+
+        with patch("karat.for_query.query", mock_query_gen):
+            with pytest.raises(
+                Exception, match="You've hit your limit",
+            ):
+                async for _ in for_query("test"):
+                    pass
+
+    @pytest.mark.asyncio
     async def it_skips_messages_without_content():
         mock_message = MagicMock(spec=[])
         del mock_message.content
