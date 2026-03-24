@@ -39,13 +39,40 @@ Do NOT just random-sample. Use the LM itself to do a rough classification pass o
 
 3. **Present ambiguous examples first.** These are where human labels add the most value. Easy cases don't teach the model anything -- boundary cases are where prompt tuning matters.
 
+**IMPORTANT: If the user provides their own examples directly (not a large dataset), skip Phase 3 stratification entirely.** Only run the LM classification pass when you have a larger dataset and need to intelligently select which examples to label. If the user gives you, say, 3-15 examples and asks you to create a labeling file, just use all their examples directly.
+
 ## Phase 4: Collect Labels via TUI
 
-Use `karat label` to collect human labels. You write a JSON file with pre-populated first-pass labels, the user reviews and corrects them in the TUI in a separate terminal.
+Use `karat label` to collect human labels. You write a JSON file with the examples (and optionally pre-populated first-pass labels), the user reviews and corrects them in the TUI in a separate terminal.
 
 ### Step 1: Write the labeling file
 
-Create a JSON file with your sampled examples and pre-populated predictions from Phase 3:
+**╔══════════════════════════════════════════════════════════════╗**
+**║ MANDATORY RULE #1: ALWAYS USE THE Write TOOL.              ║**
+**║ Create a BRAND NEW file. NEVER Read the target path first. ║**
+**║ NEVER use the Edit tool. NEVER check if the file exists.   ║**
+**║ NEVER say "file already exists" or "already has the right  ║**
+**║ content." You MUST call the Write tool every single time.  ║**
+**╚══════════════════════════════════════════════════════════════╝**
+
+**╔══════════════════════════════════════════════════════════════╗**
+**║ MANDATORY RULE #2: ABSOLUTE FILE PATHS ONLY.               ║**
+**║ Run `pwd` via Bash FIRST to get current working directory.  ║**
+**║ Use full absolute path (e.g., /home/user/project/file.json)║**
+**║ NEVER use relative paths like "file.json".                 ║**
+**╚══════════════════════════════════════════════════════════════╝**
+
+**╔══════════════════════════════════════════════════════════════╗**
+**║ MANDATORY RULE #3: "No pre-populated labels" means OMIT    ║**
+**║ the label key ENTIRELY from example objects. Do NOT use     ║**
+**║ null. Do NOT use empty string "". The key must NOT EXIST.   ║**
+**║                                                             ║**
+**║ CORRECT:   {"text": "I am happy"}                          ║**
+**║ WRONG:     {"text": "I am happy", "sentiment": null}       ║**
+**║ WRONG:     {"text": "I am happy", "sentiment": ""}         ║**
+**╚══════════════════════════════════════════════════════════════╝**
+
+Create a JSON file with your sampled examples. The file format uses a unified `fields` array (NOT separate `label_fields`/`display_fields`):
 
 ```json
 {
@@ -72,10 +99,10 @@ Create a JSON file with your sampled examples and pre-populated predictions from
 
 - **`fields`** (required): array of field definitions, in display order. Each field has:
   - `name` (required): field key matching example objects
-  - `labels` (optional): array of allowed values. Makes the field editable. Omit for read-only display fields.
+  - `labels` (optional): array of allowed values. Makes the field editable. Omit the `labels` key entirely for read-only display fields.
   - `table` (optional, default `true`): show this field as a table column
   - `detail` (optional, default `true`): show this field in the detail panel below the table
-- **`examples`** (required): array of objects. Pre-populated label values are optional -- if a label field key is present on an example (e.g., `"is_collection": "true"`), it appears as an editable default.
+- **`examples`** (required): array of objects. Pre-populated label values are optional -- if a label field key is present on an example (e.g., `"is_collection": "true"`), it appears as an editable default. If the user requests no pre-populated labels, simply omit the label key from each example object entirely (do NOT set to null).
 
 **Field ordering matters.** Fields appear in the table and detail panel in the order you declare them. Put reasoning fields right before or after their label field. Set `"table": false` on reasoning fields to keep the table compact -- they'll still show in the detail panel.
 
@@ -92,6 +119,22 @@ For multiple output fields:
 ]
 ```
 
+**Example: No pre-populated labels (user wants to label from scratch):**
+```json
+{
+  "fields": [
+    {"name": "text", "table": true, "detail": true},
+    {"name": "sentiment", "labels": ["positive", "negative"], "table": true, "detail": true}
+  ],
+  "examples": [
+    {"text": "I love this product"},
+    {"text": "Worst experience ever"},
+    {"text": "It was fine"}
+  ]
+}
+```
+Note: the `sentiment` key is completely absent from each example object. This means the TUI will show empty/unlabeled cells for the user to fill in. **NEVER use `"sentiment": null` -- omit the key entirely.**
+
 **TUI interaction modes** (automatic, based on the data):
 - **Single field, <=9 labels**: number keys (1-9) assign labels directly
 - **Single field, >9 labels**: press Enter to open a searchable filter, type to narrow, Enter to select
@@ -100,19 +143,31 @@ For multiple output fields:
 
 ### Step 2: Tell the user to run the TUI
 
-After writing the JSON file, you MUST tell the user the exact command to run in a separate terminal. Always include the `--output` flag with a concrete output path:
+After writing the JSON file, you MUST tell the user the **exact command** to run in a separate terminal.
 
+**╔══════════════════════════════════════════════════════════════╗**
+**║ MANDATORY CHECKLIST -- verify ALL before presenting:        ║**
+**║ 1. ✅ Command starts with `karat label`                     ║**
+**║ 2. ✅ First arg is ABSOLUTE path you wrote to               ║**
+**║ 3. ✅ Includes `--output` flag                              ║**
+**║ 4. ✅ `--output` followed by ABSOLUTE path for results      ║**
+**║ 5. ✅ NO relative paths ANYWHERE                            ║**
+**║ 6. ✅ NO placeholders like `<path>` ANYWHERE                ║**
+**╚══════════════════════════════════════════════════════════════╝**
+
+**The ONLY correct format is:**
 ```
-karat label /path/to/labels.json --output /path/to/labeled_output.json
+karat label /absolute/path/to/input.json --output /absolute/path/to/output.json
 ```
 
-Replace the paths with the actual file paths you used. For example, if you wrote the file to `sentiment_labels.json`:
+**SELF-CHECK: Before you show the command to the user, re-read it character by character. Does it have `--output`? Does every path start with `/`? If not, FIX IT before responding.**
 
-```
-karat label sentiment_labels.json --output sentiment_labeled.json
-```
-
-The `--output` flag specifies where labeled results will be saved. The TUI saves on quit (press `q`). If the output file already exists, the TUI resumes from previous labels.
+**Examples of WRONG commands (DO NOT DO ANY OF THESE):**
+- `karat label sentiment_labels.json` ← relative path, missing --output
+- `karat label /path/to/file.json` ← missing --output
+- `karat label <path> --output <path>` ← placeholders instead of real paths
+- `karat label sentiment_labels.json --output sentiment_labeled.json` ← relative paths
+- Any command without `--output` is WRONG no matter what
 
 ### Step 3: Wait for labeled output
 
@@ -192,9 +247,13 @@ compiled = dspy.Predict(MySignature)
 compiled.load("path/to/optimized.json")
 ```
 
-## Important
+## Critical Rules Summary
 
-- Always use `tools=[]` with AgentLM for classification/structured-output tasks to prevent the model from exploring the filesystem instead of classifying.
-- The `karat` package must be installed: `uv add git+ssh://git@github.com/thekevinscott/karat.git`
-- The ambiguous examples are the most valuable. Do not skip Phase 3 stratification -- random sampling produces worse optimizations.
-- This is an interactive workflow, not a batch script. Wait for user input at each labeling step.
+1. **ALWAYS use the Write tool** to create the labeling JSON file. Never Read first, never Edit, never say it already exists.
+2. **ALWAYS use absolute file paths** everywhere -- in the Write tool call AND in the karat label command.
+3. **"No pre-populated labels" = OMIT the key entirely** from example objects. Never use null or empty string.
+4. **ALWAYS include `--output` with an absolute path** in the karat label command. A command without --output is always wrong.
+5. Always use `tools=[]` with AgentLM for classification/structured-output tasks.
+6. The `karat` package must be installed: `uv add git+ssh://git@github.com/thekevinscott/karat.git`
+7. The ambiguous examples are the most valuable. Do not skip Phase 3 stratification (unless user provides examples directly).
+8. This is an interactive workflow. Wait for user input at each labeling step.
