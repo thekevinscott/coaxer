@@ -74,6 +74,9 @@ testpaths = ["karat", "tests"]
 python_files = ["*_test.py"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "slow: marks tests that make real LLM calls (deselect with '-m \"not slow\"')",
+]
 
 [tool.coverage.run]
 source = ["karat"]
