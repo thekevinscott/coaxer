@@ -1,5 +1,5 @@
 timestamp: 2026-03-24T00:00:00Z
-name: karat-multi-editable
+name: 05-multi-editable
 domain: functional
 prompt: |
   I have 3 product reviews I want to label on two dimensions:

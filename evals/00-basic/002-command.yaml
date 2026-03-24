@@ -1,0 +1,13 @@
+timestamp: 2026-03-24T00:00:00Z
+name: 00-basic
+domain: functional
+prompt: |
+  I have 3 text examples I want to label for sentiment.
+  The texts are: "I am happy", "This is terrible", "It was okay I guess".
+  The labels should be positive or negative.
+  Don't pre-populate the labels - I want to label them myself.
+  Write the labeling file so I can use karat label.
+expected: |
+  Should tell the user to run karat label with:
+  - A command like "karat label <path> --output <path>" with actual file paths
+  - The --output flag specifying where labeled results will be saved

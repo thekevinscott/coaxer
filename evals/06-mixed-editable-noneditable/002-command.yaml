@@ -1,5 +1,5 @@
 timestamp: 2026-03-24T00:00:00Z
-name: karat-mixed-editable-noneditable
+name: 06-mixed-editable-noneditable
 domain: functional
 prompt: |
   I have 3 GitHub repos I want to label. For each repo I have:
@@ -17,11 +17,5 @@ prompt: |
   Pre-populate the editable columns with your best guesses.
   Write the labeling file so I can use karat label.
 expected: |
-  Should use the Write tool to save a JSON file with the unified fields format:
-  - A "fields" array with a mix of display fields (no "labels") and label fields (with "labels")
-  - Display fields: repo_name, url, star_count -- none should have a "labels" key
-  - Label fields: language with 4 options, is_collection with 2 options
-  - An "examples" array with exactly 3 items
-  - Display field values filled in (repo names, URLs, star counts)
-  - Label field values pre-populated with predictions
-  - The fields array should preserve a sensible ordering (display fields providing context, then label fields)
+  Should tell the user to run karat label with actual file paths and --output flag.
+  Should mention running in a separate terminal.

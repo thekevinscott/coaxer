@@ -1,5 +1,5 @@
 timestamp: 2026-03-24T00:00:00Z
-name: karat-prepopulated
+name: 01-prepopulated
 domain: functional
 prompt: |
   I have 3 text examples I want to label for sentiment.
