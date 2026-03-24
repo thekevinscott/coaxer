@@ -1,0 +1,20 @@
+{
+  "skill_name": "optimize",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have 3 text examples I want to label for sentiment. The texts are: 'I am happy', 'This is terrible', 'It was okay I guess'. The labels should be positive or negative. Write the labeling file so I can use karat label to label them.",
+      "expected_output": "A valid JSON file using the unified fields format with a fields array containing a display field for the text and a label field for sentiment with labels [\"positive\", \"negative\"]. The examples array should have 3 items with the text values filled in but sentiment labels empty/absent (not pre-populated). The agent should also tell the user the karat label command to run.",
+      "files": [],
+      "expectations": [
+        "Output contains valid JSON with a 'fields' array and an 'examples' array",
+        "There is at least one field without 'labels' (display field) for the input text",
+        "There is exactly one field with 'labels' containing 'positive' and 'negative'",
+        "The examples array has exactly 3 items",
+        "The example texts match: 'I am happy', 'This is terrible', 'It was okay I guess'",
+        "Sentiment labels are NOT pre-populated on the examples",
+        "The agent tells the user to run 'karat label' with a file path"
+      ]
+    }
+  ]
+}
