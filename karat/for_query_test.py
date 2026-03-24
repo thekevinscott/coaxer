@@ -58,12 +58,12 @@ def describe_for_query():
         async def mock_query_gen(*_args, **_kwargs):
             yield error_msg
 
-        with patch("karat.for_query.query", mock_query_gen):
-            with pytest.raises(
-                Exception, match="You've hit your limit",
-            ):
-                async for _ in for_query("test"):
-                    pass
+        with (
+            patch("karat.for_query.query", mock_query_gen),
+            pytest.raises(Exception, match="You've hit your limit"),
+        ):
+            async for _ in for_query("test"):
+                pass
 
     @pytest.mark.asyncio
     async def it_skips_messages_without_content():

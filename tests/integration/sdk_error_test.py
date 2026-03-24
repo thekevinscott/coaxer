@@ -18,6 +18,8 @@ async def test_sdk_error_propagates_through_query_assistant_text():
     async def mock_query_gen(*_args, **_kwargs):
         yield error_msg
 
-    with patch("karat.for_query.query", mock_query_gen):
-        with pytest.raises(Exception, match="You've hit your limit"):
-            await query_assistant_text("test")
+    with (
+        patch("karat.for_query.query", mock_query_gen),
+        pytest.raises(Exception, match="You've hit your limit"),
+    ):
+        await query_assistant_text("test")
