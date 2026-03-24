@@ -1,0 +1,18 @@
+timestamp: 2026-03-24T00:00:00Z
+name: karat-multi-editable
+domain: functional
+prompt: |
+  I have 3 product reviews I want to label on two dimensions:
+  1. Sentiment: positive or negative
+  2. Topic: quality, price, or shipping
+
+  The reviews are:
+  - "Great quality, worth every penny"
+  - "Arrived damaged after 3 weeks"
+  - "Cheap but does the job"
+
+  Pre-populate both label columns with your best guesses.
+  Write the labeling file so I can use karat label.
+expected: |
+  Should tell the user to run karat label with actual file paths and --output flag.
+  Should mention running in a separate terminal.

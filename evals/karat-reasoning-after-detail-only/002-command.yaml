@@ -1,0 +1,15 @@
+timestamp: 2026-03-24T00:00:00Z
+name: karat-reasoning-after-detail-only
+domain: functional
+prompt: |
+  I have 3 text examples I want to label for sentiment.
+  The texts are: "I am happy", "This is terrible", "It was okay I guess".
+  The labels should be positive or negative.
+  Pre-populate the labels with your best guesses.
+  Include a reasoning column that explains your prediction.
+  The reasoning should appear AFTER the sentiment column in the field order,
+  and should show ONLY in the detail pane, NOT in the table.
+  Write the labeling file so I can use karat label.
+expected: |
+  Should tell the user to run karat label with actual file paths and --output flag.
+  Should mention running in a separate terminal.

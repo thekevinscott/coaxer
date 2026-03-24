@@ -1,0 +1,19 @@
+timestamp: 2026-03-24T00:00:00Z
+name: karat-reasoning-before-table-only
+domain: functional
+prompt: |
+  I have 3 text examples I want to label for sentiment.
+  The texts are: "I am happy", "This is terrible", "It was okay I guess".
+  The labels should be positive or negative.
+  Pre-populate the labels with your best guesses.
+  Include a reasoning column that explains your prediction.
+  The reasoning should appear BEFORE the sentiment column in the field order,
+  and should show ONLY in the table, NOT in the detail pane.
+  Write the labeling file so I can use karat label.
+expected: |
+  Should use the Write tool to save a JSON file with the unified fields format:
+  - The reasoning field must appear BEFORE the sentiment label field in the "fields" array
+  - The reasoning field must have "table": true (or omit, default is true)
+  - The reasoning field must have "detail": false
+  - The reasoning field should NOT have a "labels" key
+  - Each example should have pre-populated reasoning and sentiment values

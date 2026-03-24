@@ -1,0 +1,21 @@
+timestamp: 2026-03-24T00:00:00Z
+name: karat-mixed-editable-noneditable
+domain: functional
+prompt: |
+  I have 3 GitHub repos I want to label. For each repo I have:
+  - repo_name (display only)
+  - url (display only, should be clickable)
+  - star_count (display only)
+  - language (editable, options: Python, JavaScript, Rust, Go)
+  - is_collection (editable, options: true, false)
+
+  The repos are:
+  - awesome-python, https://github.com/vinta/awesome-python, 200k stars
+  - flask, https://github.com/pallets/flask, 68k stars
+  - deno, https://github.com/denoland/deno, 95k stars
+
+  Pre-populate the editable columns with your best guesses.
+  Write the labeling file so I can use karat label.
+expected: |
+  Should tell the user to run karat label with actual file paths and --output flag.
+  Should mention running in a separate terminal.

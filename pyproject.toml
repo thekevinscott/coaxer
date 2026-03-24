@@ -26,6 +26,7 @@ dev = [
     "ty>=0.0.1a7",
     "cachetta>=0.6.0",
     "curtaincall>=0.3.0",
+    "pyskillet>=0.2.28",
 ]
 
 [project.scripts]

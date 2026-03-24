@@ -1,0 +1,23 @@
+timestamp: 2026-03-24T00:00:00Z
+name: karat-multi-editable
+domain: functional
+prompt: |
+  I have 3 product reviews I want to label on two dimensions:
+  1. Sentiment: positive or negative
+  2. Topic: quality, price, or shipping
+
+  The reviews are:
+  - "Great quality, worth every penny"
+  - "Arrived damaged after 3 weeks"
+  - "Cheap but does the job"
+
+  Pre-populate both label columns with your best guesses.
+  Write the labeling file so I can use karat label.
+expected: |
+  Should use the Write tool to save a JSON file with the unified fields format:
+  - A "fields" array with at least one display field and TWO label fields
+  - One label field for sentiment with "labels": ["positive", "negative"] or similar
+  - One label field for topic with "labels": ["quality", "price", "shipping"] or similar
+  - An "examples" array with exactly 3 items
+  - Each example should have BOTH label fields pre-populated
+  - Both sets of pre-populated values must be strings matching their respective labels arrays

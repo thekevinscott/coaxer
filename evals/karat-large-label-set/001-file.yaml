@@ -1,0 +1,32 @@
+timestamp: 2026-03-24T00:00:00Z
+name: karat-large-label-set
+domain: functional
+prompt: |
+  I have 3 code snippets I want to classify by programming language.
+  The possible languages are: Python, JavaScript, TypeScript, Ruby, Go,
+  Rust, Java, C, C++, C#, PHP, Swift, Kotlin, Scala, Haskell, Elixir,
+  Clojure, Lua, R, Julia, Perl, Shell, PowerShell, Dart, Objective-C,
+  MATLAB, Groovy, F#, Erlang, OCaml, Zig, Nim, Crystal, V, Fortran,
+  COBOL, Ada, Pascal, Prolog, Lisp, Scheme, Racket, Assembly, VHDL,
+  Verilog, SQL, Solidity, Nix, Terraform, Puppet, Makefile, CMake,
+  Meson, Bazel, Gradle, Maven, Awk, Sed, Tcl, Forth, APL, Wolfram,
+  SAS, SPSS, Stata, Octave, Scratch, Smalltalk, Factor, Red, Odin,
+  D, GDScript, GLSL, HLSL, Metal, CUDA, WebAssembly, Cython, Mojo,
+  Chapel, Gleam, Unison, Idris, Agda, Coq, Lean, Isabelle, TLA+,
+  Ballerina, Wren, Beef, Vala, Ring, Rebol, Io, Self, Pharo, Logo,
+  Blockly, LabVIEW, Scilab, Maple, J, K, Q
+
+  The snippets are:
+  - "def hello(): print('world')"
+  - "console.log('hello')"
+  - "fn main() { println!(\"hello\"); }"
+
+  Pre-populate with your best guesses.
+  Write the labeling file so I can use karat label.
+expected: |
+  Should use the Write tool to save a JSON file with the unified fields format:
+  - A "fields" array with a display field for the code snippet and a label field for language
+  - The language label field must have a "labels" array containing ALL of the languages listed (100+ items)
+  - The labels array should not be truncated or abbreviated
+  - An "examples" array with exactly 3 items
+  - Each example should have the language field pre-populated (Python, JavaScript, Rust)

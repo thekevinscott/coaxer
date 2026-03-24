@@ -1,0 +1,18 @@
+timestamp: 2026-03-24T00:00:00Z
+name: karat-reasoning-table-detail
+domain: functional
+prompt: |
+  I have 3 text examples I want to label for sentiment.
+  The texts are: "I am happy", "This is terrible", "It was okay I guess".
+  The labels should be positive or negative.
+  Pre-populate the labels with your best guesses.
+  Include a reasoning column that explains your prediction.
+  The reasoning should show up in both the table and the detail pane.
+  Write the labeling file so I can use karat label.
+expected: |
+  Should use the Write tool to save a JSON file with the unified fields format:
+  - A "fields" array with a display field for text, a reasoning field, and a sentiment label field
+  - The reasoning field should have "table": true (or omit it, since true is default) AND "detail": true (or omit it)
+  - The reasoning field should NOT have a "labels" key (it's a display field, not editable)
+  - Each example should have pre-populated reasoning text explaining the prediction
+  - Each example should have pre-populated sentiment labels
