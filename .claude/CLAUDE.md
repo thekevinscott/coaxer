@@ -21,6 +21,12 @@ Evals-first prompt optimization. Label examples, get better prompts.
 
 TDD Order: integration tests first, then unit tests.
 
+### Test organization
+
+- **Unit tests** (`karat/*_test.py`): colocated, mock everything except the function under test
+- **Integration tests** (`tests/integration/`): test multiple modules together with mocked externals (SDK, filesystem). ALL integration tests go here, not colocated.
+- **E2E tests** (`tests/e2e/`): curtaincall-based, real PTY, test actual user experience
+
 ### Running Tests
 
 ```bash
