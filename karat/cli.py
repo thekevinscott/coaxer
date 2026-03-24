@@ -28,16 +28,13 @@ def install() -> None:
 def label(args: list[str]) -> None:
     """Launch the labeling TUI."""
     if len(args) < 1:
-        print("Usage: karat label <input.json> [--output <output.json>]")
+        print("Usage: karat label <input.json> --output <output.json>")
         print()
-        print("Input JSON format:")
-        print('  {"label_field": "is_collection", "labels": ["true", "false"],')
-        print('   "display_fields": ["name", "description"],')
-        print('   "examples": [{"name": "foo", "description": "bar"}, ...]}')
+        print("--output is required.")
         sys.exit(1)
 
     input_path = args[0]
-    output_path = input_path.replace(".json", "_labeled.json")
+    output_path = None
 
     i = 1
     while i < len(args):
@@ -46,6 +43,11 @@ def label(args: list[str]) -> None:
             i += 2
         else:
             i += 1
+
+    if output_path is None:
+        print("Error: --output is required.")
+        print("Usage: karat label <input.json> --output <output.json>")
+        sys.exit(1)
 
     from .tui import run_label_tui
 
