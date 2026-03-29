@@ -1,10 +1,10 @@
-"""DSPy language model backed by the Anthropic Agent SDK (Claude Code).
+"""DSPy language models for Claude Code and OpenAI-compatible endpoints.
 
-This package provides AgentLM, a drop-in DSPy language model that routes
-all LLM calls through the Anthropic Agent SDK. No API key is needed --
-it uses your existing Claude Code authentication.
+AgentLM routes calls through the Anthropic Agent SDK (Claude Code).
+OpenAILM calls any OpenAI-compatible chat completion API (Ollama, vLLM,
+OpenAI, etc.).
 
-Quick start::
+Quick start with Claude Code::
 
     import dspy
     from karat import AgentLM
@@ -12,33 +12,29 @@ Quick start::
     lm = AgentLM()
     dspy.configure(lm=lm)
 
-    predict = dspy.Predict("question -> answer")
-    result = predict(question="What is 2+2?")
+Quick start with Ollama::
 
-For classification and structured output, disable tools to prevent the
-model from exploring the filesystem::
+    from karat import OpenAILM
 
-    lm = AgentLM(tools=[])
+    lm = OpenAILM(model="llama3")
+    dspy.configure(lm=lm)
 
-All keyword arguments are passed through to ClaudeAgentOptions (tools,
-max_turns, allowed_tools, disallowed_tools, env, etc.).
+Quick start with OpenAI::
+
+    lm = OpenAILM(model="gpt-4o", base_url="https://api.openai.com/v1", api_key="sk-...")
 
 Load optimized programs saved by the /optimize skill::
 
     from karat import load_predict
     classify = load_predict(ClassifyRepo, path="data/optimized.json")
-
-Optional caching via cachetta (decorator-based, wraps the query function)::
-
-    from cachetta import Cachetta
-    cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
-    lm = AgentLM(cache=cache)
 """
 
 from .lm import AgentLM
 from .load_predict import load_predict
+from .openai_lm import OpenAILM
 
 __all__ = [
     "AgentLM",
+    "OpenAILM",
     "load_predict",
 ]

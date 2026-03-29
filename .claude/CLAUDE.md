@@ -82,6 +82,7 @@ karat/                   # Main package
   _internal/             # Private utilities (run_sync, etc.)
   skills/optimize/       # /optimize skill (SKILL.md, installed via CLI)
   lm.py                  # AgentLM - DSPy LM backed by Agent SDK
+  openai_lm.py           # OpenAILM - DSPy LM for OpenAI-compatible endpoints
   load_predict.py        # Load optimized DSPy programs with fallback
   tui.py                 # Textual labeling TUI (multi-field, pre-population)
   cli.py                 # CLI entry point (karat install, karat label)
