@@ -48,6 +48,25 @@ classify = load_predict(ClassifyRepo, path="data/optimized_classify_repo.json")
 result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
 ```
 
+## Using Local Models (Ollama, vLLM)
+
+`OpenAILM` calls any OpenAI-compatible chat completion API. No Claude Code CLI required.
+
+```python
+import dspy
+from karat import OpenAILM
+
+# Ollama (default -- targets localhost:11434)
+lm = OpenAILM(model="llama3")
+dspy.configure(lm=lm)
+
+# vLLM
+lm = OpenAILM(model="meta-llama/Llama-3-8B", base_url="http://localhost:8000/v1")
+
+# OpenAI
+lm = OpenAILM(model="gpt-4o", base_url="https://api.openai.com/v1", api_key="sk-...")
+```
+
 ## AgentLM Options
 
 All keyword arguments are forwarded to `ClaudeAgentOptions`:
@@ -68,5 +87,6 @@ Per-call kwargs override constructor kwargs (shallow merge).
 ## Requirements
 
 - Python >= 3.14
-- Claude Code CLI installed and authenticated
 - DSPy >= 2.6
+- For `AgentLM`: Claude Code CLI installed and authenticated
+- For `OpenAILM`: an OpenAI-compatible endpoint (Ollama, vLLM, OpenAI, etc.)

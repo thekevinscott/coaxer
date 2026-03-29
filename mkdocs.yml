@@ -49,6 +49,7 @@ nav:
       - Caching: guide/caching.md
   - API Reference:
       - AgentLM: api/agent-lm.md
+      - OpenAILM: api/openai-lm.md
       - load_predict: api/load-predict.md
       - CLI: api/cli.md
   - llms.txt: llms-full.md
