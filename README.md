@@ -2,6 +2,8 @@
 
 Evals-first prompt optimization. Label examples, get better prompts.
 
+[Documentation](https://thekevinscott.github.io/karat/)
+
 The prompt is a build artifact -- your labeled examples are the source of truth. When you want a better prompt, add more examples and regenerate.
 
 ## Install
