@@ -16,8 +16,22 @@ tmp/
 .coverage
 .worktrees
 
+# Docs build output
+site/
+
 # Environment
 .env
 
 # Local issue tracking
 .beads/
+
+# Eval run output files (written by skillet eval to project root)
+/sentiment*.json
+/repos*.json
+/language*.json
+/code_snippets*.json
+/github_repos*.json
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
