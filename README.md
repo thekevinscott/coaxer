@@ -7,13 +7,13 @@ The prompt is a build artifact -- your labeled examples are the source of truth.
 ## Install
 
 ```bash
-uv add git+ssh://git@github.com/thekevinscott/karat.git
+uv add karat
 ```
 
 ### Install the `/optimize` skill (optional)
 
 ```bash
-uvx --from git+ssh://git@github.com/thekevinscott/karat.git karat install
+uvx karat install
 ```
 
 Copies the `/optimize` skill into `.claude/skills/optimize/SKILL.md` in your project. The skill walks agents through labeling examples and optimizing prompts.
@@ -121,7 +121,7 @@ cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
 lm = AgentLM(cache=cache)
 ```
 
-Install with the cache extra: `uv add "karat[cache] @ git+ssh://..."`
+Install with the cache extra: `uv add "karat[cache]"`
 
 ## Development
 

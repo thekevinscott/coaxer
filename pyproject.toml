@@ -7,12 +7,16 @@ requires-python = ">=3.14"
 dependencies = [
     "dspy>=2.6",
     "claude-agent-sdk",
-    "textual>=3.0",
+    "textual>=3.0"
 ]
 
 [project.optional-dependencies]
 cache = [
     "cachetta>=0.6.0",
+]
+docs = [
+    "mkdocs-material",
+    "mkdocstrings[python]",
 ]
 dev = [
     "rust-just>=1.0",

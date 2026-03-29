@@ -8,10 +8,30 @@ Evals-first prompt optimization. Label examples, get better prompts.
 
 ## Workflow
 
-- Work in git worktrees under `.worktrees/`, tie PRs to GitHub issues
-- Never commit directly to main -- always create a PR
+- **Always work in a branch or git worktree** -- never commit directly to main
+- Work in git worktrees under `.worktrees/` for parallel work, or feature branches for sequential work
+- Tie PRs to GitHub issues
 - Keep PRs minimal but complete (one self-contained feature)
 - Don't add unused code for future PRs
+
+### Issue Tracking (Beads)
+
+Use `bd` (beads) for local issue tracking. One issue per task.
+
+```bash
+bd create "title" --description "details"   # Create issue
+bd update <id> --status in_progress         # Start work
+bd close <id>                               # Done
+bd list                                     # Show open issues
+```
+
+### PR Checklist
+
+Before considering a PR complete:
+1. **CI checks pass** -- monitor with `gh pr checks <pr-number>` or `gh run list`
+2. **GPG commits are verified** -- all commits must be signed
+3. **No merge conflicts** -- rebase on main if needed
+4. **Changelog updated** -- if user-facing changes
 
 ## Testing (Red/Green TDD, Outside-In)
 
