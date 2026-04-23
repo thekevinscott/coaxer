@@ -48,3 +48,7 @@ def _build_default_lm():
     from coaxer.lm import AgentLM
 
     return AgentLM()
+
+
+if __name__ == "__main__":
+    main()
