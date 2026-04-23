@@ -1,40 +1,27 @@
-"""DSPy language models for Claude Code and OpenAI-compatible endpoints.
+"""Label examples, derive prompts.
 
-AgentLM routes calls through the Anthropic Agent SDK (Claude Code).
-OpenAILM calls any OpenAI-compatible chat completion API (Ollama, vLLM,
-OpenAI, etc.).
+Compile a label folder into a reusable prompt::
 
-Quick start with Claude Code::
+    coaxer distill labels/repo-classification --out prompts/repo-classification
 
-    import dspy
-    from coaxer import AgentLM
+Use the compiled prompt as a drop-in `str`::
 
-    lm = AgentLM()
-    dspy.configure(lm=lm)
+    from coaxer import CoaxPrompt
 
-Quick start with Ollama::
+    p = CoaxPrompt("prompts/repo-classification")
+    filled = p(readme=new_readme, stars=1200)
 
-    from coaxer import OpenAILM
-
-    lm = OpenAILM(model="llama3")
-    dspy.configure(lm=lm)
-
-Quick start with OpenAI::
-
-    lm = OpenAILM(model="gpt-4o", base_url="https://api.openai.com/v1", api_key="sk-...")
-
-Load optimized programs saved by the /optimize skill::
-
-    from coaxer import load_predict
-    classify = load_predict(ClassifyRepo, path="data/optimized.json")
+`AgentLM` and `OpenAILM` back the compile step and are also available for
+direct use. `AgentLM` routes through the Anthropic Agent SDK (Claude Code);
+`OpenAILM` calls any OpenAI-compatible endpoint (Ollama, vLLM, OpenAI).
 """
 
-from .lm import AgentLM
-from .load_predict import load_predict
-from .openai_lm import OpenAILM
+from coaxer.lm import AgentLM
+from coaxer.openai_lm import OpenAILM
+from coaxer.prompt import CoaxPrompt
 
 __all__ = [
     "AgentLM",
+    "CoaxPrompt",
     "OpenAILM",
-    "load_predict",
 ]
