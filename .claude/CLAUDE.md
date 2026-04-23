@@ -25,6 +25,11 @@ bd close <id>                               # Done
 bd list                                     # Show open issues
 ```
 
+### Opening PRs
+
+- **Local sessions:** don't open a PR unless I ask.
+- **Remote / cloud sessions (Claude Code on the web, sandboxed environments where I can't push from my own machine):** you *should* open a PR once the branch is ready. Push first, then open it against `main` with a summary and test plan. This is the default output of a remote session — waiting for me to ask defeats the point.
+
 ### PR Checklist
 
 Before considering a PR complete:
