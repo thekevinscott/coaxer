@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from karat.for_query import for_query
+from coaxer.for_query import for_query
 
 
 def describe_for_query():
@@ -18,7 +18,7 @@ def describe_for_query():
         async def mock_query_gen(*_args, **_kwargs):
             yield mock_message
 
-        with patch("karat.for_query.query", mock_query_gen):
+        with patch("coaxer.for_query.query", mock_query_gen):
             blocks = []
             async for block in for_query("test prompt"):
                 blocks.append(block)
@@ -40,7 +40,7 @@ def describe_for_query():
         async def mock_query_gen(*_args, **_kwargs):
             yield mock_message
 
-        with patch("karat.for_query.query", mock_query_gen):
+        with patch("coaxer.for_query.query", mock_query_gen):
             blocks = []
             async for block in for_query("test", block_type=TextBlock):
                 blocks.append(block)
@@ -59,7 +59,7 @@ def describe_for_query():
             yield error_msg
 
         with (
-            patch("karat.for_query.query", mock_query_gen),
+            patch("coaxer.for_query.query", mock_query_gen),
             pytest.raises(Exception, match="You've hit your limit"),
         ):
             async for _ in for_query("test"):
@@ -73,7 +73,7 @@ def describe_for_query():
         async def mock_query_gen(*_args, **_kwargs):
             yield mock_message
 
-        with patch("karat.for_query.query", mock_query_gen):
+        with patch("coaxer.for_query.query", mock_query_gen):
             blocks = []
             async for block in for_query("test"):
                 blocks.append(block)

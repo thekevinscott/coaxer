@@ -1,6 +1,6 @@
 """E2E tests for the labeling TUI using curtaincall.
 
-These tests spawn `karat label` in a real PTY and verify the terminal
+These tests spawn `coaxer label` in a real PTY and verify the terminal
 output the user actually sees. For internal state tests (assigned dict,
 column keys), see tests/integration/tui_test.py which uses Textual's pilot.
 """
@@ -12,7 +12,7 @@ from pathlib import Path
 
 from curtaincall import Terminal, expect
 
-KARAT = "uv run karat"
+COAXER = "uv run coaxer"
 
 
 def _write_input(tmp_path: Path, data: dict) -> tuple[Path, Path]:
@@ -76,7 +76,7 @@ def describe_launch():
         tmp_path: Path,
     ):
         inp, out = _write_input(tmp_path, _single_field_data())
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("awesome-python")).to_be_visible(
             timeout=30,
         )
@@ -88,14 +88,14 @@ def describe_launch():
         tmp_path: Path,
     ):
         inp, out = _write_input(tmp_path, _single_field_data())
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("0/3")).to_be_visible(timeout=30)
 
     def it_exits_1_for_missing_file(
         terminal: Callable[..., Terminal],
         tmp_path: Path,
     ):
-        term = terminal(f"{KARAT} label {tmp_path / 'nope.json'}")
+        term = terminal(f"{COAXER} label {tmp_path / 'nope.json'}")
         expect(term).to_have_exited(timeout=15)
         assert term.exit_code == 1
 
@@ -106,7 +106,7 @@ def describe_launch():
         data = _single_field_data()
         data["examples"][0]["is_collection"] = "collection"
         inp, out = _write_input(tmp_path, data)
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("collection")).to_be_visible(timeout=30)
 
 
@@ -118,7 +118,7 @@ def describe_single_field_labeling():
         tmp_path: Path,
     ):
         inp, out = _write_input(tmp_path, _single_field_data())
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("awesome-python")).to_be_visible(
             timeout=30,
         )
@@ -131,7 +131,7 @@ def describe_single_field_labeling():
         tmp_path: Path,
     ):
         inp, out = _write_input(tmp_path, _single_field_data())
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("awesome-python")).to_be_visible(
             timeout=30,
         )
@@ -150,7 +150,7 @@ def describe_single_field_labeling():
         tmp_path: Path,
     ):
         inp, out = _write_input(tmp_path, _single_field_data())
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("awesome-python")).to_be_visible(
             timeout=30,
         )
@@ -178,7 +178,7 @@ def describe_single_field_labeling():
         }
         out.write_text(json.dumps(existing))
 
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("2/3")).to_be_visible(timeout=30)
 
 
@@ -218,7 +218,7 @@ def describe_many_labels():
         tmp_path: Path,
     ):
         inp, out = _write_input(tmp_path, _many_labels_data())
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("web-scraper")).to_be_visible(timeout=30)
         term.key_enter()
         expect(term.get_by_text("Type to filter")).to_be_visible(
@@ -230,7 +230,7 @@ def describe_many_labels():
         tmp_path: Path,
     ):
         inp, out = _write_input(tmp_path, _many_labels_data())
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("web-scraper")).to_be_visible(timeout=30)
         term.key_enter()
         expect(term.get_by_text("Type to filter")).to_be_visible(
@@ -247,7 +247,7 @@ def describe_many_labels():
         tmp_path: Path,
     ):
         inp, out = _write_input(tmp_path, _many_labels_data())
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("web-scraper")).to_be_visible(timeout=30)
         term.key_enter()
         expect(term.get_by_text("Type to filter")).to_be_visible(
@@ -266,7 +266,7 @@ def describe_multi_field():
         tmp_path: Path,
     ):
         inp, out = _write_input(tmp_path, _multi_field_data())
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("language")).to_be_visible(timeout=30)
         expect(term.get_by_text("is_collection")).to_be_visible()
 
@@ -285,7 +285,7 @@ def describe_multi_field():
             ],
         }
         inp, out = _write_input(tmp_path, data)
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("item1")).to_be_visible(timeout=30)
         term.write("q")  # save with prepopulated values
         expect(term).to_have_exited(timeout=10)
@@ -313,7 +313,7 @@ def describe_field_visibility():
             ],
         }
         inp, out = _write_input(tmp_path, data)
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("test")).to_be_visible(timeout=30)
         assert not term.get_by_text("secret value").is_visible()
 
@@ -339,7 +339,7 @@ def describe_field_visibility():
             ],
         }
         inp, out = _write_input(tmp_path, data)
-        term = terminal(f"{KARAT} label {inp} --output {out}")
+        term = terminal(f"{COAXER} label {inp} --output {out}")
         expect(term.get_by_text("test")).to_be_visible(timeout=30)
         # Reasoning should be visible in detail panel
         expect(term.get_by_text("XYZ reasoning")).to_be_visible()

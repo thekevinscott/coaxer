@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from karat.query_assistant_text import query_assistant_text
+from coaxer.query_assistant_text import query_assistant_text
 
 
 async def test_sdk_error_propagates_through_query_assistant_text():
@@ -19,7 +19,7 @@ async def test_sdk_error_propagates_through_query_assistant_text():
         yield error_msg
 
     with (
-        patch("karat.for_query.query", mock_query_gen),
+        patch("coaxer.for_query.query", mock_query_gen),
         pytest.raises(Exception, match="You've hit your limit"),
     ):
         await query_assistant_text("test")

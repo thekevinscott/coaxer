@@ -5,8 +5,8 @@ import json
 import httpx
 import pytest
 
-from karat.dataclasses import CompletionResponse
-from karat.openai_lm import OpenAILM
+from coaxer.dataclasses import CompletionResponse
+from coaxer.openai_lm import OpenAILM
 
 
 def _mock_chat_response(content="Hello world", model="llama3"):

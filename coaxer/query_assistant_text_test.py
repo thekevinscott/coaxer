@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from karat.query_assistant_text import query_assistant_text
+from coaxer.query_assistant_text import query_assistant_text
 
 
 def describe_query_assistant_text():
@@ -23,7 +23,7 @@ def describe_query_assistant_text():
         async def mock_query_gen(*_args, **_kwargs):
             yield mock_message
 
-        with patch("karat.for_query.query", mock_query_gen):
+        with patch("coaxer.for_query.query", mock_query_gen):
             result = await query_assistant_text("test prompt")
             assert result == "Hello World"
 
@@ -40,6 +40,6 @@ def describe_query_assistant_text():
         async def mock_query_gen(*_args, **_kwargs):
             yield mock_message
 
-        with patch("karat.for_query.query", mock_query_gen):
+        with patch("coaxer.for_query.query", mock_query_gen):
             result = await query_assistant_text("test")
             assert result == "response"
