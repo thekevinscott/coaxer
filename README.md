@@ -1,10 +1,14 @@
 # coaxer
 
-Evals-first prompt optimization. Label examples, get better prompts.
+Label examples. Derive the prompt. Consume it as a string.
 
 [Documentation](https://thekevinscott.github.io/coaxer/)
 
-The prompt is a build artifact -- your labeled examples are the source of truth. When you want a better prompt, add more examples and regenerate.
+## Motivation
+
+Writing prompts by hand is slow, and the prose grows brittle as cases accumulate. Coaxer flips it: label examples of the behavior you want, derive the prompt from those labels -- when it drifts, add more labels instead of rewriting.
+
+Labels are the source of truth. The prompt is a build artifact.
 
 ## Install
 
@@ -12,108 +16,86 @@ The prompt is a build artifact -- your labeled examples are the source of truth.
 uv add coaxer
 ```
 
-### Install the `/optimize` skill (optional)
+## Label
 
-```bash
-uvx coaxer install
+One directory per record. `record.json` holds scalar fields; large text and binary inputs live as sibling files.
+
+```
+labels/repo-classification/
+  _schema.json              # optional: field descriptions + types + enums
+  0001/
+    record.json             # {id, inputs: {readme, stars, ...}, output}
+    readme.md               # large text referenced from record.json
+  0002/
+    ...
 ```
 
-Copies the `/optimize` skill into `.claude/skills/optimize/SKILL.md` in your project. The skill walks agents through labeling examples and optimizing prompts.
-
-## Usage
-
-```python
-import dspy
-from coaxer import AgentLM
-
-lm = AgentLM()
-dspy.configure(lm=lm)
-
-class Classify(dspy.Signature):
-    """Classify a GitHub repo as a curated collection or an organic project."""
-    readme: str = dspy.InputField()
-    is_collection: bool = dspy.OutputField()
-
-classify = dspy.Predict(Classify)
-result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
-```
-
-## Loading Optimized Programs
-
-After running `/optimize`, load the compiled program with `load_predict`:
-
-```python
-from coaxer import load_predict
-from my_sigs import ClassifyRepo
-
-# Loads optimized JSON if it exists, falls back to unoptimized
-classify = load_predict(ClassifyRepo, path="data/optimized_classify_repo.json")
-result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
-```
-
-## Labeling TUI
-
-For interactive labeling in a separate terminal:
-
-```bash
-coaxer label examples.json --output labeled.json
-```
-
-The agent writes examples to a JSON file, the user labels them in the TUI, and the agent reads the results back.
-
-### Input format
+`_schema.json` is optional. Without it, field names and types are inferred from the records.
 
 ```json
 {
-  "fields": [
-    {"name": "url"},
-    {"name": "description"},
-    {"name": "reasoning", "table": false},
-    {"name": "is_collection", "labels": ["true", "false"]}
-  ],
-  "examples": [
-    {"url": "https://...", "description": "A curated list",
-     "reasoning": "YES: curated list pattern",
-     "is_collection": "true"}
-  ]
+  "inputs": {
+    "readme": {"desc": "Project README markdown"},
+    "stars": {"desc": "GitHub star count", "type": "int"}
+  },
+  "output": {
+    "desc": "Curated collection vs organic project",
+    "type": "enum",
+    "values": ["true", "false"]
+  }
 }
 ```
 
-- **`fields`**: ordered array of field definitions. Each field has:
-  - `name`: key in example objects
-  - `labels` (optional): allowed values -- makes the field editable
-  - `table` (default `true`): show as a table column
-  - `detail` (default `true`): show in detail panel
-- **Pre-populated values**: if an example has a value for a label field, it's shown as an editable default
-- URLs are automatically rendered as clickable links
+## Distill
 
-### Interaction
+```bash
+coaxer distill labels/repo-classification --out prompts/repo-classification
+```
 
-- **Single field, <=9 labels**: number keys assign directly
-- **Single field, >9 labels**: Enter opens searchable filter, type to narrow
-- **Multiple fields**: spreadsheet-style cell cursor, Enter on a label cell opens search, Tab/Shift+Tab move between label columns
-- `u` clears current cell, `Shift+U` clears entire row, `q` saves and quits
+Writes four files to the output folder:
 
-Legacy formats (`label_fields`/`display_fields` or `label_field`/`labels`) are also supported.
+| File | Purpose |
+|---|---|
+| `prompt.jinja` | Human-readable Jinja template with `{{ field }}` slots. |
+| `meta.json` | Compile metadata: `compiled_at`, `example_count`, `label_hash`, schema. |
+| `dspy.json` | DSPy program state (only when `--optimizer gepa`). |
+| `history.jsonl` | Append-only compile log. |
 
-## Options
+Optimizer is opt-in. `--optimizer gepa` runs DSPy 3's GEPA pass and requires an LLM credential. The default (`--optimizer none`) emits a schema-derived template and is reproducible without network.
 
-`AgentLM` passes all keyword arguments through to `ClaudeAgentOptions`:
+## Consume
 
 ```python
-# Strip all tools (recommended for classification/structured output)
-lm = AgentLM(tools=[])
+from coaxer import CoaxPrompt
 
-# Allow specific tools
-lm = AgentLM(allowed_tools=["Read", "Glob"])
-
-# Set environment variables for the SDK subprocess
-lm = AgentLM(env={"CLAUDECODE": ""})
+p = CoaxPrompt("prompts/repo-classification", role="classifier")  # bind defaults
+filled = p(readme=new_readme, stars=1200)                         # render at call time
 ```
+
+- `CoaxPrompt(path, **bound)` — `str` subclass; `__new__` reads `prompt.jinja`.
+- `str(p)` — raw template.
+- `p(**vars)` — Jinja2 `StrictUndefined` render; missing variables raise.
+- Call-time variables override bound defaults.
+
+Because `CoaxPrompt` is a `str`, it drops in anywhere a string is accepted (logging, OpenAI SDK `messages`, Anthropic SDK, DSPy signatures built externally, etc.).
+
+## Compile LLMs
+
+`AgentLM` routes compile calls through the Anthropic Agent SDK (Claude Code). `OpenAILM` hits any OpenAI-compatible endpoint (Ollama, vLLM, OpenAI).
+
+```python
+from coaxer import AgentLM, OpenAILM
+
+lm = AgentLM()                                # Claude via Agent SDK
+lm = OpenAILM(model="llama3")                 # Ollama
+lm = OpenAILM(model="gpt-4o", base_url="https://api.openai.com/v1", api_key="sk-...")
+```
+
+Both pass keyword arguments through to their underlying client.
 
 ## Caching
 
-Pass a [cachetta](https://github.com/thekevinscott/cachetta) instance to wrap the query function with file-backed caching:
+Pass a [cachetta](https://github.com/thekevinscott/cachetta) instance to file-back LM responses:
 
 ```python
 from cachetta import Cachetta
@@ -123,12 +105,12 @@ cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
 lm = AgentLM(cache=cache)
 ```
 
-Install with the cache extra: `uv add "coaxer[cache]"`
+Install with the cache extra: `uv add "coaxer[cache]"`.
 
 ## Development
 
 ```bash
 uv sync --extra dev
-uv run just test-unit   # Run tests
+uv run just test-unit   # Unit tests
 uv run just ci          # Full CI (lint + format + typecheck + tests)
 ```

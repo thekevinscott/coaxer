@@ -6,87 +6,116 @@
 uv add coaxer
 ```
 
-### Install the `/optimize` skill (optional)
+## Label your examples
+
+Coaxer uses a directory-per-record format. Each record lives in its own folder under a labels root; `record.json` holds scalar fields and references sibling files for larger text or binary inputs.
+
+```
+labels/repo-classification/
+  _schema.json              # optional
+  0001/
+    record.json
+    readme.md
+  0002/
+    record.json
+    readme.md
+```
+
+`record.json`:
+
+```json
+{
+  "id": "0001",
+  "inputs": {
+    "readme": "readme.md",
+    "description": "A curated list of awesome Claude skills",
+    "stars": 521
+  },
+  "output": "true"
+}
+```
+
+When an input value names a file that exists in the record folder, coaxer reads that file at compile time (UTF-8 for text, raw bytes for binary). All other values pass through as-is.
+
+### Optional schema
+
+`_schema.json` adds field descriptions, explicit types, and enum values. Descriptions feed the optimizer's prompt synthesis; types become the DSPy signature annotations.
+
+```json
+{
+  "inputs": {
+    "readme": {"desc": "Project README markdown"},
+    "stars": {"desc": "GitHub star count", "type": "int"}
+  },
+  "output": {
+    "desc": "Whether the repo is a curated collection",
+    "type": "enum",
+    "values": ["true", "false"]
+  }
+}
+```
+
+Without a schema, field names and types are inferred from the first record.
+
+## Distill a prompt
 
 ```bash
-uvx coaxer install
+coaxer distill labels/repo-classification --out prompts/repo-classification
 ```
 
-This copies the `/optimize` skill into `.claude/skills/optimize/SKILL.md` in your project. The skill walks agents through labeling examples and optimizing prompts.
+This writes four artifacts:
 
-## Basic Usage
+| File | Purpose |
+|---|---|
+| `prompt.jinja` | The prompt template with `{{ field }}` slots. |
+| `meta.json` | `compiled_at`, `example_count`, `label_hash`, schema snapshot. |
+| `dspy.json` | DSPy program state (only when `--optimizer gepa`). |
+| `history.jsonl` | One line per compile. |
+
+The default optimizer is `none` -- it emits a schema-derived template without calling any LLM. Pass `--optimizer gepa` to run DSPy 3's GEPA pass, which requires an LLM credential (default: `AgentLM` / Claude Code).
+
+## Consume the prompt
+
+`CoaxPrompt` is a `str` subclass. The raw Jinja template is what `str(p)` returns, so the object drops in anywhere a string is accepted. `p(**vars)` renders it.
+
+```python
+from coaxer import CoaxPrompt
+
+p = CoaxPrompt("prompts/repo-classification")
+filled = p(
+    readme="# awesome-skills\n\n500+ curated Claude skills",
+    description="A curated list of awesome Claude skills",
+    stars=521,
+)
+```
+
+Missing variables raise `UndefinedError` (Jinja2 `StrictUndefined`). Bind defaults at construction time and override at call time:
+
+```python
+p = CoaxPrompt("prompts/repo-classification", role="classifier")
+filled = p(role="summarizer", readme=..., stars=...)  # call-time wins
+```
+
+## Optional: back the compile step with a specific LLM
 
 ```python
 import dspy
-from coaxer import AgentLM
+from coaxer import AgentLM, OpenAILM
 
-# Create a DSPy LM backed by Claude Code
-lm = AgentLM()
-dspy.configure(lm=lm)
-
-# Define a signature
-class Classify(dspy.Signature):
-    """Classify a GitHub repo as a curated collection or an organic project."""
-    readme: str = dspy.InputField()
-    is_collection: bool = dspy.OutputField()
-
-# Run inference
-classify = dspy.Predict(Classify)
-result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
+dspy.configure(lm=AgentLM())                        # Claude via Agent SDK
+dspy.configure(lm=OpenAILM(model="llama3"))         # Ollama
 ```
 
-## Loading Optimized Programs
+Then:
 
-After running `/optimize`, load the compiled program:
-
-```python
-from coaxer import load_predict
-from my_sigs import ClassifyRepo
-
-# Loads optimized JSON if it exists, falls back to unoptimized
-classify = load_predict(ClassifyRepo, path="data/optimized_classify_repo.json")
-result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
+```bash
+coaxer distill labels/... --out prompts/... --optimizer gepa
 ```
-
-## Using Local Models (Ollama, vLLM)
-
-`OpenAILM` calls any OpenAI-compatible chat completion API. No Claude Code CLI required.
-
-```python
-import dspy
-from coaxer import OpenAILM
-
-# Ollama (default -- targets localhost:11434)
-lm = OpenAILM(model="llama3")
-dspy.configure(lm=lm)
-
-# vLLM
-lm = OpenAILM(model="meta-llama/Llama-3-8B", base_url="http://localhost:8000/v1")
-
-# OpenAI
-lm = OpenAILM(model="gpt-4o", base_url="https://api.openai.com/v1", api_key="sk-...")
-```
-
-## AgentLM Options
-
-All keyword arguments are forwarded to `ClaudeAgentOptions`:
-
-```python
-# Strip all tools (recommended for classification/structured output)
-lm = AgentLM(tools=[])
-
-# Allow specific tools
-lm = AgentLM(allowed_tools=["Read", "Glob"])
-
-# Set environment variables for the SDK subprocess
-lm = AgentLM(env={"CLAUDECODE": ""})
-```
-
-Per-call kwargs override constructor kwargs (shallow merge).
 
 ## Requirements
 
 - Python >= 3.14
-- DSPy >= 2.6
+- DSPy >= 3.0 (for GEPA)
+- Jinja2 >= 3.0
 - For `AgentLM`: Claude Code CLI installed and authenticated
-- For `OpenAILM`: an OpenAI-compatible endpoint (Ollama, vLLM, OpenAI, etc.)
+- For `OpenAILM`: an OpenAI-compatible endpoint

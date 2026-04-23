@@ -1,17 +1,19 @@
 # coaxer -- Complete Reference (LLM-friendly)
 
-This is the full coaxer documentation on a single page, designed for consumption by language models.
+Full coaxer documentation on a single page, designed for consumption by language models.
 
 ## What is coaxer?
 
-coaxer is an evals-first prompt optimization library for Python. It provides:
+Coaxer turns labeled examples into prompts. You label behavior you want, coaxer compiles it into a `prompt.jinja` template, you consume the template as a string at runtime.
 
-1. **AgentLM**: A DSPy language model that routes LLM calls through the Anthropic Agent SDK (Claude Code). No API key needed.
-2. **load_predict**: Load optimized DSPy programs from JSON, with fallback to unoptimized.
-3. **Labeling TUI**: A terminal interface for human-in-the-loop example labeling.
-4. **/optimize skill**: A Claude Code skill orchestrating the full workflow: signature -> data -> sampling -> labeling -> optimization -> compiled program.
+The library provides:
 
-The core idea: the prompt is a build artifact. Your labeled examples are the source of truth. When you want a better prompt, add more examples and regenerate.
+1. **Label folder format** — one directory per record; `record.json` + sibling files for text/binary.
+2. **`coaxer distill` CLI** — reads the folder, optionally runs DSPy 3 + GEPA optimization, writes a prompt artifact.
+3. **`CoaxPrompt`** — a `str` subclass that loads `prompt.jinja` and renders it via Jinja2 at call time.
+4. **`AgentLM` / `OpenAILM`** — DSPy `BaseLM` backends for the optional compile-time optimizer (Claude via Agent SDK, or any OpenAI-compatible endpoint).
+
+The prompt is a build artifact. Labeled examples are the source of truth.
 
 ## Installation
 
@@ -19,199 +21,148 @@ The core idea: the prompt is a build artifact. Your labeled examples are the sou
 uv add coaxer
 ```
 
-With caching support:
+With caching:
 
 ```bash
 uv add "coaxer[cache]"
 ```
 
-Install the /optimize Claude Code skill:
+Requirements: Python >= 3.14, DSPy >= 3.0, Jinja2 >= 3.0. `AgentLM` additionally requires the Claude Code CLI installed and authenticated.
 
-```bash
-uvx coaxer install
+## Label folder format
+
+```
+labels/<name>/
+  _schema.json              # optional
+  0001/
+    record.json
+    readme.md               # sibling file referenced from record.json
+  0002/
+    record.json
+    logo.png                # binary is fine
 ```
 
-Requirements: Python >= 3.14, Claude Code CLI installed and authenticated, DSPy >= 2.6.
+`record.json`:
 
-## AgentLM
-
-A DSPy `BaseLM` subclass. Each `forward()` call spawns a Claude Code subprocess via `claude_agent_sdk.query()`.
-
-### Constructor
-
-```python
-AgentLM(
-    model: str = "claude-agent-sdk",    # DSPy tracking identifier
-    model_type: str = "chat",
-    max_tokens: int = 4096,
-    cache: Cachetta | None = None,      # Optional response cache
-    **kwargs,                           # Forwarded to ClaudeAgentOptions
-)
+```json
+{
+  "id": "0001",
+  "inputs": {
+    "readme": "readme.md",
+    "stars": 521
+  },
+  "output": "true"
+}
 ```
 
-### Common kwargs (ClaudeAgentOptions)
+When a value names a file that exists in the record folder, the file's contents are substituted at compile time (UTF-8 text if decodable, raw bytes otherwise). Other values pass through.
 
-- `tools: list` -- Tools available. Pass `[]` for classification/structured output.
-- `allowed_tools: list[str]` -- Tool allowlist (e.g., `["Read", "Glob"]`).
-- `disallowed_tools: list[str]` -- Tool denylist.
-- `max_turns: int` -- Maximum agentic turns.
-- `env: dict[str, str]` -- Environment variables for the subprocess.
+`_schema.json` is optional. It adds field descriptions, types, and enum values:
 
-### Methods
-
-- `forward(prompt=None, messages=None, **kwargs) -> CompletionResponse` -- Sync forward pass. String prompt or OpenAI-style messages. Per-call kwargs override constructor kwargs.
-- `aforward(prompt=None, messages=None, **kwargs) -> CompletionResponse` -- Async version.
-- `copy(**kwargs) -> AgentLM` -- New instance with updated kwargs.
-- `inspect_history(n=1) -> list[dict]` -- Last n prompt/response pairs.
-
-### Usage
-
-```python
-import dspy
-from coaxer import AgentLM
-
-lm = AgentLM(tools=[])
-dspy.configure(lm=lm)
-
-class Classify(dspy.Signature):
-    """Classify a GitHub repo as a curated collection or an organic project."""
-    readme: str = dspy.InputField()
-    is_collection: bool = dspy.OutputField()
-
-classify = dspy.Predict(Classify)
-result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
+```json
+{
+  "inputs": {
+    "readme": {"desc": "Project README markdown"},
+    "stars": {"desc": "GitHub star count", "type": "int"}
+  },
+  "output": {
+    "desc": "Curated collection vs organic project",
+    "type": "enum",
+    "values": ["true", "false"]
+  }
+}
 ```
 
-## load_predict
-
-```python
-load_predict(signature: type, path: str | Path | None = None) -> dspy.Predict
-```
-
-Creates a `dspy.Predict(signature)`. If `path` is provided and exists, loads the optimized program. If path doesn't exist, logs a warning and returns unoptimized. If path is None, returns unoptimized.
-
-```python
-from coaxer import load_predict
-classify = load_predict(ClassifyRepo, path="data/optimized.json")
-```
+Supported types: `str`, `int`, `float`, `bool`, `bytes`, `enum` (with `values`). Without `_schema.json`, types are inferred from the first record.
 
 ## CLI
 
-### coaxer install
+### `coaxer distill`
 
 ```bash
-uvx coaxer install
+coaxer distill <labels-dir> --out <prompts-dir> [--optimizer {none,gepa}] [--output-name NAME]
 ```
 
-Copies bundled skills into `.claude/skills/` in the current directory.
+- `<labels-dir>` — path to the label folder.
+- `--out` — output folder (created if missing).
+- `--optimizer` — `none` (default) emits schema-derived template with no network. `gepa` runs DSPy 3 GEPA, requires an LLM credential, writes `dspy.json`.
+- `--output-name` — name of the predicted output field in the rendered template (default `output`).
 
-### coaxer label
+Writes:
+
+| File | When | Content |
+|---|---|---|
+| `prompt.jinja` | Always | Jinja2 template with `{{ field }}` slots. |
+| `meta.json` | Always | `compiled_at`, `optimizer`, `example_count`, `label_hash`, schema. |
+| `dspy.json` | `--optimizer gepa` | DSPy program state. |
+| `history.jsonl` | Always | One line per compile. |
+
+## `CoaxPrompt`
+
+```python
+from coaxer import CoaxPrompt
+
+p = CoaxPrompt("prompts/repo-classification", role="classifier")
+filled = p(readme=new_readme, stars=1200)
+```
+
+- `CoaxPrompt(path, **bound)` — str subclass. `__new__` reads `prompt.jinja`. `**bound` sets default variables.
+- `str(p)` — raw template.
+- `p(**vars)` — Jinja2 `StrictUndefined` render. Missing vars raise `UndefinedError`. Call-time vars override bound defaults.
+
+Because `CoaxPrompt` is a `str`, it drops into any API that accepts a string.
+
+## `AgentLM`
+
+DSPy `BaseLM` subclass. Each `forward()` call spawns a Claude Code subprocess via `claude_agent_sdk.query()`.
+
+```python
+AgentLM(
+    model: str = "claude-agent-sdk",
+    model_type: str = "chat",
+    max_tokens: int = 4096,
+    cache: Cachetta | None = None,
+    **kwargs,                # forwarded to ClaudeAgentOptions
+)
+```
+
+Common `ClaudeAgentOptions` kwargs:
+
+- `tools: list` — pass `[]` for structured-output tasks.
+- `allowed_tools: list[str]`, `disallowed_tools: list[str]`.
+- `max_turns: int`.
+- `env: dict[str, str]` — subprocess environment.
+
+Methods: `forward`, `aforward`, `copy(**kwargs)`, `inspect_history(n)`.
+
+## `OpenAILM`
+
+DSPy `BaseLM` subclass that hits any OpenAI-compatible chat endpoint.
+
+```python
+from coaxer import OpenAILM
+
+lm = OpenAILM(model="llama3")                                           # Ollama default
+lm = OpenAILM(model="meta-llama/Llama-3-8B", base_url="http://localhost:8000/v1")
+lm = OpenAILM(model="gpt-4o", base_url="https://api.openai.com/v1", api_key="sk-...")
+```
+
+## End-to-end example
 
 ```bash
-coaxer label <input.json> --output <output.json>
+coaxer distill labels/repo-classification --out prompts/repo-classification
 ```
 
-Both the input path and `--output` flag are required. Launches the labeling TUI.
+```python
+from coaxer import CoaxPrompt
 
-## Labeling TUI Input Format
-
-```json
-{
-  "fields": [
-    {"name": "url"},
-    {"name": "description"},
-    {"name": "reasoning", "table": false},
-    {"name": "is_collection", "labels": ["true", "false"]}
-  ],
-  "examples": [
-    {
-      "url": "https://github.com/vinta/awesome-python",
-      "description": "A curated list of awesome Python frameworks",
-      "reasoning": "YES: 'curated list' is a collection marker",
-      "is_collection": "true"
-    },
-    {
-      "url": "https://github.com/pallets/flask",
-      "description": "The Python micro framework for building web applications"
-    }
-  ]
-}
+p = CoaxPrompt("prompts/repo-classification")
+print(p(
+    readme="# awesome-skills\n500+ curated Claude skills",
+    description="A curated list of awesome Claude skills",
+    stars=521,
+))
 ```
-
-### Field Properties
-
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `name` | string | required | Key matching example objects |
-| `labels` | string[] | omit | Allowed values. Makes the field editable. Omit entirely for read-only. |
-| `table` | bool | `true` | Show as a table column |
-| `detail` | bool | `true` | Show in detail panel |
-
-Field ordering matters -- fields appear in declared order.
-
-### Pre-populated Labels
-
-Include the label key in the example object for a pre-populated default. Omit the key entirely (not null, not empty string) for blank.
-
-```json
-{"text": "I love this", "sentiment": "positive"}
-{"text": "It was okay"}
-```
-
-### URLs
-
-URLs in display fields render as clickable links in the table.
-
-### Interaction Modes
-
-- **Single field, <= 9 labels**: Number keys (1-9) assign directly
-- **Single field, > 9 labels**: Enter opens searchable filter
-- **Multiple editable fields**: Spreadsheet-style cell cursor, Enter opens search, Tab/Shift+Tab between columns
-
-### Keybindings
-
-- `j`/Down, `k`/Up: Navigate rows
-- `1`-`9`: Assign label (single-field, <= 9 labels)
-- Enter: Open searchable filter
-- Tab/Shift+Tab: Next/prev label column (multi-field)
-- `u`: Clear cell
-- `Shift+U`: Clear row
-- `s`: Skip example
-- `q`: Save and quit
-
-### Output Format
-
-Same structure as input. Label values are strings or `null` (skipped). Exclude null examples from training.
-
-### Multiple Editable Fields Example
-
-```json
-{
-  "fields": [
-    {"name": "url"},
-    {"name": "language_reasoning", "table": false},
-    {"name": "language", "labels": ["Python", "JavaScript", "Rust", "Go"]},
-    {"name": "is_collection_reasoning", "table": false},
-    {"name": "is_collection", "labels": ["true", "false"]}
-  ],
-  "examples": [
-    {"url": "https://github.com/example/repo"}
-  ]
-}
-```
-
-### Legacy Formats
-
-Also supported: `label_fields` + `display_fields` arrays, or `label_field` (string) + `labels` (array) + `display_fields`.
-
-## /optimize Skill Workflow
-
-1. **Read Signature**: User provides a DSPy Signature (file path or inline)
-2. **Get Data**: Accept any format (CSV, JSON, JSONL, Parquet, SQL, etc.)
-3. **Smart Sampling**: LM classification pass, stratify into positive/negative/ambiguous, present ambiguous first
-4. **Collect Labels**: Write JSON, user runs `coaxer label` in separate terminal
-5. **Optimize**: Split train/val, configure AgentLM(tools=[]), run BootstrapFewShot or MIPROv2
-6. **Save**: Compiled program as JSON with instruction, demos, metadata
 
 ## Caching
 
@@ -223,4 +174,4 @@ cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
 lm = AgentLM(cache=cache, tools=[])
 ```
 
-Wraps the internal query function. Cache key derived from prompt. Install: `uv add "coaxer[cache]"`.
+Install: `uv add "coaxer[cache]"`.

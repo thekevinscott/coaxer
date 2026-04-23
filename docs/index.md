@@ -1,8 +1,8 @@
 # coaxer
 
-Evals-first prompt optimization. Label examples, get better prompts.
+Label examples. Derive the prompt. Consume it as a string.
 
-The prompt is a build artifact -- your labeled examples are the source of truth. When you want a better prompt, add more examples and regenerate.
+The prompt is a build artifact; your labeled examples are the source of truth. When the prompt drifts, add more examples and recompile.
 
 ## Install
 
@@ -10,30 +10,26 @@ The prompt is a build artifact -- your labeled examples are the source of truth.
 uv add coaxer
 ```
 
-## Quick Start
+## Quick start
 
-```python
-import dspy
-from coaxer import AgentLM
+Label a handful of examples in a folder (see [Getting Started](guide/getting-started.md) for the shape), then:
 
-lm = AgentLM()
-dspy.configure(lm=lm)
-
-class Classify(dspy.Signature):
-    """Classify a GitHub repo as a curated collection or an organic project."""
-    readme: str = dspy.InputField()
-    is_collection: bool = dspy.OutputField()
-
-classify = dspy.Predict(Classify)
-result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
+```bash
+coaxer distill labels/repo-classification --out prompts/repo-classification
 ```
 
-## Core Concepts
+Use the compiled prompt:
 
-**AgentLM** is a DSPy language model that routes all LLM calls through the Anthropic Agent SDK (Claude Code). No API key needed -- it uses your existing Claude Code authentication.
+```python
+from coaxer import CoaxPrompt
 
-**load_predict** loads optimized DSPy programs saved by the `/optimize` skill, with automatic fallback to unoptimized if the file doesn't exist.
+p = CoaxPrompt("prompts/repo-classification")
+filled = p(readme=new_readme, stars=1200)
+```
 
-**Labeling TUI** is a terminal interface for human-in-the-loop labeling. An agent writes examples to JSON, a human labels them in the TUI, and the agent reads results back.
+## Core concepts
 
-**/optimize skill** is a Claude Code skill that orchestrates the full workflow: read a DSPy Signature, sample data, collect human labels via the TUI, run DSPy optimization, and save a compiled program.
+- **Label folder** — one directory per record. `record.json` holds scalar fields; sibling files (`readme.md`, `logo.png`) carry large text or binary inputs.
+- **`coaxer distill`** — reads the folder, builds a DSPy signature internally, optionally runs GEPA, writes `prompt.jinja` + `meta.json` + `dspy.json` + `history.jsonl`.
+- **`CoaxPrompt(path)`** — a `str` subclass. `str(p)` is the raw Jinja template; `p(**vars)` renders it. Drops in anywhere a string is accepted.
+- **`AgentLM` / `OpenAILM`** — LLM backends for the optional compile-time optimizer. See the [API reference](api/agent-lm.md).
