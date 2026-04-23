@@ -71,13 +71,12 @@ class AgentLM(BaseLM):
         Any extra kwargs are merged with constructor kwargs and forwarded to
         ClaudeAgentOptions.
         """
-        extracted_prompt = extract_prompt(prompt, messages)
-        merged_opts = {**self.kwargs, **kwargs}
+        user_prompt, merged_opts = self._prepare_call(prompt, messages, kwargs)
 
         query_fn = self._cached_query or query_assistant_text
-        response_text = run_sync(query_fn(extracted_prompt, **merged_opts))
+        response_text = run_sync(query_fn(user_prompt, **merged_opts))
 
-        return self._build_response(extracted_prompt, response_text, kwargs)
+        return self._build_response(user_prompt, response_text, kwargs)
 
     async def aforward(
         self,
@@ -86,13 +85,31 @@ class AgentLM(BaseLM):
         **kwargs,
     ) -> CompletionResponse:
         """Async forward pass. Calls the SDK directly without threading."""
-        extracted_prompt = extract_prompt(prompt, messages)
-        merged_opts = {**self.kwargs, **kwargs}
+        user_prompt, merged_opts = self._prepare_call(prompt, messages, kwargs)
 
         query_fn = self._cached_query or query_assistant_text
-        response_text = await query_fn(extracted_prompt, **merged_opts)
+        response_text = await query_fn(user_prompt, **merged_opts)
 
-        return self._build_response(extracted_prompt, response_text, kwargs)
+        return self._build_response(user_prompt, response_text, kwargs)
+
+    def _prepare_call(
+        self,
+        prompt: str | None,
+        messages: list[dict] | None,
+        kwargs: dict,
+    ) -> tuple[str, dict]:
+        """Extract user prompt text and build merged SDK options.
+
+        Routes any ``system`` turn in ``messages`` into the
+        ``system_prompt`` option of ClaudeAgentOptions, unless the caller
+        has already supplied ``system_prompt`` via constructor or per-call
+        kwargs (in which case the caller wins).
+        """
+        system, user_prompt = extract_prompt(prompt, messages)
+        merged_opts = {**self.kwargs, **kwargs}
+        if system and "system_prompt" not in merged_opts:
+            merged_opts["system_prompt"] = system
+        return user_prompt, merged_opts
 
     def _build_response(self, prompt: str, response_text: str, kwargs: dict) -> CompletionResponse:
         """Build a CompletionResponse and update history."""
