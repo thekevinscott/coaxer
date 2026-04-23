@@ -16,6 +16,6 @@ warnings.warn(
     stacklevel=2,
 )
 
-from coaxer import AgentLM, OpenAILM, load_predict  # noqa: E402
+from coaxer import AgentLM, CoaxPrompt, OpenAILM  # noqa: E402
 
-__all__ = ["AgentLM", "OpenAILM", "load_predict"]
+__all__ = ["AgentLM", "CoaxPrompt", "OpenAILM"]
