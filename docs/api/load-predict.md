@@ -1,6 +1,6 @@
 # load_predict
 
-::: karat.load_predict
+::: coaxer.load_predict
     options:
       show_source: false
       show_root_heading: true
@@ -29,7 +29,7 @@ This is the complement to the `/optimize` skill, which saves optimized programs 
 ## Example
 
 ```python
-from karat import load_predict
+from coaxer import load_predict
 from my_sigs import ClassifyRepo
 
 # With optimization (falls back gracefully)

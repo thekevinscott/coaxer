@@ -1,21 +1,21 @@
-# karat
+# coaxer
 
 Evals-first prompt optimization. Label examples, get better prompts.
 
-[Documentation](https://thekevinscott.github.io/karat/)
+[Documentation](https://thekevinscott.github.io/coaxer/)
 
 The prompt is a build artifact -- your labeled examples are the source of truth. When you want a better prompt, add more examples and regenerate.
 
 ## Install
 
 ```bash
-uv add karat
+uv add coaxer
 ```
 
 ### Install the `/optimize` skill (optional)
 
 ```bash
-uvx karat install
+uvx coaxer install
 ```
 
 Copies the `/optimize` skill into `.claude/skills/optimize/SKILL.md` in your project. The skill walks agents through labeling examples and optimizing prompts.
@@ -24,7 +24,7 @@ Copies the `/optimize` skill into `.claude/skills/optimize/SKILL.md` in your pro
 
 ```python
 import dspy
-from karat import AgentLM
+from coaxer import AgentLM
 
 lm = AgentLM()
 dspy.configure(lm=lm)
@@ -43,7 +43,7 @@ result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
 After running `/optimize`, load the compiled program with `load_predict`:
 
 ```python
-from karat import load_predict
+from coaxer import load_predict
 from my_sigs import ClassifyRepo
 
 # Loads optimized JSON if it exists, falls back to unoptimized
@@ -56,7 +56,7 @@ result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
 For interactive labeling in a separate terminal:
 
 ```bash
-karat label examples.json --output labeled.json
+coaxer label examples.json --output labeled.json
 ```
 
 The agent writes examples to a JSON file, the user labels them in the TUI, and the agent reads the results back.
@@ -117,13 +117,13 @@ Pass a [cachetta](https://github.com/thekevinscott/cachetta) instance to wrap th
 
 ```python
 from cachetta import Cachetta
-from karat import AgentLM
+from coaxer import AgentLM
 
 cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
 lm = AgentLM(cache=cache)
 ```
 
-Install with the cache extra: `uv add "karat[cache]"`
+Install with the cache extra: `uv add "coaxer[cache]"`
 
 ## Development
 

@@ -1,23 +1,23 @@
 # CLI
 
-karat provides a command-line interface with two subcommands.
+coaxer provides a command-line interface with two subcommands.
 
-## `karat install`
+## `coaxer install`
 
 Copies bundled skills into `.claude/skills/` in the current project directory.
 
 ```bash
-uvx karat install
+uvx coaxer install
 ```
 
 Currently installs the `/optimize` skill. Each skill is a `SKILL.md` file that Claude Code loads automatically.
 
-## `karat label`
+## `coaxer label`
 
 Launches the labeling TUI for interactive example labeling.
 
 ```bash
-karat label <input.json> --output <output.json>
+coaxer label <input.json> --output <output.json>
 ```
 
 ### Arguments

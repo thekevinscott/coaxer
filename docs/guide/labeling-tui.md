@@ -5,7 +5,7 @@ Interactive terminal interface for human-in-the-loop example labeling. An agent 
 ## Launch
 
 ```bash
-karat label /path/to/input.json --output /path/to/output.json
+coaxer label /path/to/input.json --output /path/to/output.json
 ```
 
 Both `--output` (or `-o`) and the input path are required. Use absolute paths.

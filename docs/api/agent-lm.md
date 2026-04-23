@@ -1,6 +1,6 @@
 # AgentLM
 
-::: karat.AgentLM
+::: coaxer.AgentLM
     options:
       show_source: false
       show_root_heading: true
@@ -51,7 +51,7 @@ Returns the last `n` history entries (prompt + response pairs).
 
 ```python
 import dspy
-from karat import AgentLM
+from coaxer import AgentLM
 
 # Basic usage
 lm = AgentLM()
