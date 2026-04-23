@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Changed
+- **Renamed package from `karat` to `coaxer`.** Install with `uv add coaxer`. Update imports to `from coaxer import ...` and use the `coaxer` CLI (`coaxer install`, `coaxer label`). The repository has moved to https://github.com/thekevinscott/coaxer.
+
+### Deprecated
+- The `karat` package and `karat` CLI remain as thin shims that re-export from `coaxer` and emit a `DeprecationWarning`. The shim will be removed in a future release; migrate to `coaxer`.
+
 ### Added
 - `OpenAILM` -- DSPy language model for OpenAI-compatible endpoints (Ollama, vLLM, OpenAI, etc.)
 

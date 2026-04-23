@@ -1,10 +1,10 @@
-# karat -- Complete Reference (LLM-friendly)
+# coaxer -- Complete Reference (LLM-friendly)
 
-This is the full karat documentation on a single page, designed for consumption by language models.
+This is the full coaxer documentation on a single page, designed for consumption by language models.
 
-## What is karat?
+## What is coaxer?
 
-karat is an evals-first prompt optimization library for Python. It provides:
+coaxer is an evals-first prompt optimization library for Python. It provides:
 
 1. **AgentLM**: A DSPy language model that routes LLM calls through the Anthropic Agent SDK (Claude Code). No API key needed.
 2. **load_predict**: Load optimized DSPy programs from JSON, with fallback to unoptimized.
@@ -16,19 +16,19 @@ The core idea: the prompt is a build artifact. Your labeled examples are the sou
 ## Installation
 
 ```bash
-uv add karat
+uv add coaxer
 ```
 
 With caching support:
 
 ```bash
-uv add "karat[cache]"
+uv add "coaxer[cache]"
 ```
 
 Install the /optimize Claude Code skill:
 
 ```bash
-uvx karat install
+uvx coaxer install
 ```
 
 Requirements: Python >= 3.14, Claude Code CLI installed and authenticated, DSPy >= 2.6.
@@ -68,7 +68,7 @@ AgentLM(
 
 ```python
 import dspy
-from karat import AgentLM
+from coaxer import AgentLM
 
 lm = AgentLM(tools=[])
 dspy.configure(lm=lm)
@@ -91,24 +91,24 @@ load_predict(signature: type, path: str | Path | None = None) -> dspy.Predict
 Creates a `dspy.Predict(signature)`. If `path` is provided and exists, loads the optimized program. If path doesn't exist, logs a warning and returns unoptimized. If path is None, returns unoptimized.
 
 ```python
-from karat import load_predict
+from coaxer import load_predict
 classify = load_predict(ClassifyRepo, path="data/optimized.json")
 ```
 
 ## CLI
 
-### karat install
+### coaxer install
 
 ```bash
-uvx karat install
+uvx coaxer install
 ```
 
 Copies bundled skills into `.claude/skills/` in the current directory.
 
-### karat label
+### coaxer label
 
 ```bash
-karat label <input.json> --output <output.json>
+coaxer label <input.json> --output <output.json>
 ```
 
 Both the input path and `--output` flag are required. Launches the labeling TUI.
@@ -209,7 +209,7 @@ Also supported: `label_fields` + `display_fields` arrays, or `label_field` (stri
 1. **Read Signature**: User provides a DSPy Signature (file path or inline)
 2. **Get Data**: Accept any format (CSV, JSON, JSONL, Parquet, SQL, etc.)
 3. **Smart Sampling**: LM classification pass, stratify into positive/negative/ambiguous, present ambiguous first
-4. **Collect Labels**: Write JSON, user runs `karat label` in separate terminal
+4. **Collect Labels**: Write JSON, user runs `coaxer label` in separate terminal
 5. **Optimize**: Split train/val, configure AgentLM(tools=[]), run BootstrapFewShot or MIPROv2
 6. **Save**: Compiled program as JSON with instruction, demos, metadata
 
@@ -217,10 +217,10 @@ Also supported: `label_fields` + `display_fields` arrays, or `label_field` (stri
 
 ```python
 from cachetta import Cachetta
-from karat import AgentLM
+from coaxer import AgentLM
 
 cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
 lm = AgentLM(cache=cache, tools=[])
 ```
 
-Wraps the internal query function. Cache key derived from prompt. Install: `uv add "karat[cache]"`.
+Wraps the internal query function. Cache key derived from prompt. Install: `uv add "coaxer[cache]"`.

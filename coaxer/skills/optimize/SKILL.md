@@ -41,7 +41,7 @@ Do NOT just random-sample. Use the LM itself to do a rough classification pass o
 
 ## Phase 4: Collect Labels via TUI
 
-Use `karat label` to collect human labels. You write a JSON file with pre-populated first-pass labels, the user reviews and corrects them in the TUI in a separate terminal.
+Use `coaxer label` to collect human labels. You write a JSON file with pre-populated first-pass labels, the user reviews and corrects them in the TUI in a separate terminal.
 
 ### Step 1: Write the labeling file
 
@@ -101,7 +101,7 @@ For multiple output fields:
 ### Step 2: Tell the user to run the TUI
 
 ```bash
-karat label <input.json> --output <output.json>
+coaxer label <input.json> --output <output.json>
 ```
 
 - `--output` / `-o`: path for labeled results. Defaults to `<input>_labeled.json` if omitted.
@@ -145,7 +145,7 @@ With labeled examples:
 
 2. **Configure the LM:**
    ```python
-   from karat import AgentLM
+   from coaxer import AgentLM
    import dspy
 
    lm = AgentLM(tools=[])
@@ -190,6 +190,6 @@ compiled.load("path/to/optimized.json")
 ## Important
 
 - Always use `tools=[]` with AgentLM for classification/structured-output tasks to prevent the model from exploring the filesystem instead of classifying.
-- The `karat` package must be installed: `uv add git+ssh://git@github.com/thekevinscott/karat.git`
+- The `coaxer` package must be installed: `uv add git+ssh://git@github.com/thekevinscott/coaxer.git`
 - The ambiguous examples are the most valuable. Do not skip Phase 3 stratification -- random sampling produces worse optimizations.
 - This is an interactive workflow, not a batch script. Wait for user input at each labeling step.

@@ -1,8 +1,8 @@
-site_name: karat
+site_name: coaxer
 site_description: Evals-first prompt optimization. Label examples, get better prompts.
-site_url: https://thekevinscott.github.io/karat/
-repo_url: https://github.com/thekevinscott/karat
-repo_name: thekevinscott/karat
+site_url: https://thekevinscott.github.io/coaxer/
+repo_url: https://github.com/thekevinscott/coaxer
+repo_name: thekevinscott/coaxer
 
 theme:
   name: material

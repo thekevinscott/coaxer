@@ -3,13 +3,13 @@
 ## Installation
 
 ```bash
-uv add karat
+uv add coaxer
 ```
 
 ### Install the `/optimize` skill (optional)
 
 ```bash
-uvx karat install
+uvx coaxer install
 ```
 
 This copies the `/optimize` skill into `.claude/skills/optimize/SKILL.md` in your project. The skill walks agents through labeling examples and optimizing prompts.
@@ -18,7 +18,7 @@ This copies the `/optimize` skill into `.claude/skills/optimize/SKILL.md` in you
 
 ```python
 import dspy
-from karat import AgentLM
+from coaxer import AgentLM
 
 # Create a DSPy LM backed by Claude Code
 lm = AgentLM()
@@ -40,7 +40,7 @@ result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
 After running `/optimize`, load the compiled program:
 
 ```python
-from karat import load_predict
+from coaxer import load_predict
 from my_sigs import ClassifyRepo
 
 # Loads optimized JSON if it exists, falls back to unoptimized
@@ -54,7 +54,7 @@ result = classify(readme="# awesome-skills\n\n500+ curated Claude skills")
 
 ```python
 import dspy
-from karat import OpenAILM
+from coaxer import OpenAILM
 
 # Ollama (default -- targets localhost:11434)
 lm = OpenAILM(model="llama3")

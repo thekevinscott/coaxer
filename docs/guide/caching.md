@@ -1,18 +1,18 @@
 # Caching
 
-karat supports response caching via [cachetta](https://github.com/thekevinscott/cachetta), a file-backed cache decorator. This avoids redundant LLM calls when the same prompt is run multiple times.
+coaxer supports response caching via [cachetta](https://github.com/thekevinscott/cachetta), a file-backed cache decorator. This avoids redundant LLM calls when the same prompt is run multiple times.
 
 ## Install
 
 ```bash
-uv add "karat[cache]"
+uv add "coaxer[cache]"
 ```
 
 ## Usage
 
 ```python
 from cachetta import Cachetta
-from karat import AgentLM
+from coaxer import AgentLM
 
 cache = Cachetta(
     path=lambda prompt, **kw: f"cache/{prompt}.pkl",

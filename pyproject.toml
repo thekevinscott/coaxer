@@ -1,5 +1,5 @@
 [project]
-name = "karat"
+name = "coaxer"
 dynamic = ["version"]
 description = "Evals-first prompt optimization. Label examples, get better prompts."
 readme = "README.md"
@@ -33,6 +33,7 @@ dev = [
 ]
 
 [project.scripts]
+coaxer = "coaxer.cli:main"
 karat = "karat.cli:main"
 
 [build-system]
@@ -46,7 +47,7 @@ source = "vcs"
 local_scheme = "no-local-version"
 
 [tool.hatch.build.targets.wheel]
-packages = ["karat"]
+packages = ["coaxer", "karat"]
 
 
 [tool.ruff]
@@ -68,19 +69,19 @@ max-statements = 50
 "tests/**/*.py" = ["PLR2004", "PLR0915", "C901", "ARG001"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["karat"]
+known-first-party = ["coaxer", "karat"]
 
 [tool.ruff.format]
 quote-style = "double"
 
 [tool.pytest.ini_options]
-testpaths = ["karat", "tests"]
+testpaths = ["coaxer", "tests"]
 python_files = ["*_test.py"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.run]
-source = ["karat"]
+source = ["coaxer"]
 branch = true
 omit = ["*_test.py"]
 

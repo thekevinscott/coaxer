@@ -1,10 +1,10 @@
-# karat
+# coaxer
 
 Evals-first prompt optimization. Label examples, get better prompts.
 
 ## Sandbox
 
-- **All scratch/debug Python scripts must go to `/tmp`**. Never run `python -c` or `python3 -c` inline. Write to `/tmp/karat-*.py` and execute that.
+- **All scratch/debug Python scripts must go to `/tmp`**. Never run `python -c` or `python3 -c` inline. Write to `/tmp/coaxer-*.py` and execute that.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ TDD Order: integration tests first, then unit tests.
 
 ### Test organization
 
-- **Unit tests** (`karat/*_test.py`): colocated, mock everything except the function under test
+- **Unit tests** (`coaxer/*_test.py`): colocated, mock everything except the function under test
 - **Integration tests** (`tests/integration/`): test multiple modules together with mocked externals (SDK, filesystem). ALL integration tests go here, not colocated.
 - **E2E tests** (`tests/e2e/`): curtaincall-based, real PTY, test actual user experience
 
@@ -78,18 +78,19 @@ uv run just ci               # Full local CI (lint + format + typecheck + tests)
 ## Project Structure
 
 ```
-karat/                   # Main package
+coaxer/                  # Main package
   _internal/             # Private utilities (run_sync, etc.)
   skills/optimize/       # /optimize skill (SKILL.md, installed via CLI)
   lm.py                  # AgentLM - DSPy LM backed by Agent SDK
   openai_lm.py           # OpenAILM - DSPy LM for OpenAI-compatible endpoints
   load_predict.py        # Load optimized DSPy programs with fallback
   tui.py                 # Textual labeling TUI (multi-field, pre-population)
-  cli.py                 # CLI entry point (karat install, karat label)
+  cli.py                 # CLI entry point (coaxer install, coaxer label)
   for_query.py           # Async generator over SDK query blocks
   query_assistant_text.py # Extract text from assistant responses
   extract_prompt.py      # Normalize DSPy prompt formats
   dataclasses.py         # OpenAI-compatible response types
+karat/                   # Deprecated shim package (re-exports from coaxer)
 tests/
   integration/           # Integration tests (TUI pilot, mocked SDK)
   e2e/                   # End-to-end tests (subprocess CLI)

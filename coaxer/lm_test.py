@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from karat.lm import AgentLM
+from coaxer.lm import AgentLM
 
-LM_MODULE = "karat.lm"
+LM_MODULE = "coaxer.lm"
 
 
 @pytest.fixture(autouse=True)

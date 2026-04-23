@@ -2,7 +2,7 @@
 
 import pytest
 
-from karat.extract_prompt import extract_prompt
+from coaxer.extract_prompt import extract_prompt
 
 
 @pytest.mark.parametrize(

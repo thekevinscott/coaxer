@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from textual.widgets import DataTable
 
-from karat.tui import LabelApp
+from coaxer.tui import LabelApp
 
 
 @pytest.fixture

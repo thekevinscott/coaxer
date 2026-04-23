@@ -1,4 +1,4 @@
-# karat
+# coaxer
 
 Evals-first prompt optimization. Label examples, get better prompts.
 
@@ -7,14 +7,14 @@ The prompt is a build artifact -- your labeled examples are the source of truth.
 ## Install
 
 ```bash
-uv add karat
+uv add coaxer
 ```
 
 ## Quick Start
 
 ```python
 import dspy
-from karat import AgentLM
+from coaxer import AgentLM
 
 lm = AgentLM()
 dspy.configure(lm=lm)

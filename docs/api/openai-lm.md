@@ -1,6 +1,6 @@
 # OpenAILM
 
-::: karat.OpenAILM
+::: coaxer.OpenAILM
     options:
       show_source: false
       show_root_heading: true
@@ -36,7 +36,7 @@ Returns a new `OpenAILM` with updated kwargs. Inherited from `BaseLM`.
 
 ```python
 import dspy
-from karat import OpenAILM
+from coaxer import OpenAILM
 
 # Ollama (default)
 lm = OpenAILM(model="llama3")
