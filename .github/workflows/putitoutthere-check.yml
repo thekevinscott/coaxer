@@ -1,0 +1,26 @@
+name: Putitoutthere check
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # Upstream's GitHub Action bundle is broken across all published
+      # tags (double entry-point guard: the CLI guard fires before the
+      # action wrapper, so the wrapper never runs). Invoke the CLI
+      # directly instead — `plan --dry-run` is what the action would
+      # have run anyway.
+      - run: npx -y putitoutthere@0.1.36 plan --dry-run
