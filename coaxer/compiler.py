@@ -103,11 +103,10 @@ def _run_gepa(
 
     program = dspy.Predict(signature)
     trainset = [
-        dspy.Example(**r.inputs, **{output_name: r.output}).with_inputs(*r.inputs)
-        for r in records
+        dspy.Example(**r.inputs, **{output_name: r.output}).with_inputs(*r.inputs) for r in records
     ]
 
-    def metric(example: Any, pred: Any, trace: Any = None) -> float:
+    def metric(example: Any, pred: Any, trace: Any = None) -> float:  # noqa: ARG001
         return 1.0 if getattr(pred, output_name, None) == getattr(example, output_name) else 0.0
 
     with dspy.context(lm=lm):

@@ -12,7 +12,6 @@ import dspy
 
 from coaxer.schema import Field, Schema
 
-
 _TYPE_MAP: dict[str, type] = {
     "str": str,
     "int": int,
@@ -26,7 +25,10 @@ def build_signature(schema: Schema, output_name: str = "output") -> type[dspy.Si
     fields: dict[str, tuple[Any, Any]] = {}
     for name, spec in schema.inputs.items():
         fields[name] = (_annotation(spec), dspy.InputField(desc=spec.desc or ""))
-    fields[output_name] = (_annotation(schema.output), dspy.OutputField(desc=schema.output.desc or ""))
+    fields[output_name] = (
+        _annotation(schema.output),
+        dspy.OutputField(desc=schema.output.desc or ""),
+    )
     instructions = _build_instructions(schema, output_name)
     return dspy.make_signature(fields, instructions=instructions)
 

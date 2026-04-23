@@ -4,7 +4,6 @@ import pytest
 
 from coaxer.records import Record, load_records
 
-
 FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "labels" / "demo"
 
 
@@ -70,9 +69,7 @@ def test_record_is_sortable_by_id(tmp_path: Path):
     for rid in ["0003", "0001", "0002"]:
         d = tmp_path / rid
         d.mkdir()
-        (d / "record.json").write_text(
-            f'{{"id": "{rid}", "inputs": {{}}, "output": "x"}}'
-        )
+        (d / "record.json").write_text(f'{{"id": "{rid}", "inputs": {{}}, "output": "x"}}')
     records = load_records(tmp_path)
     assert [r.id for r in records] == ["0001", "0002", "0003"]
 

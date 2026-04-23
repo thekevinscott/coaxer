@@ -5,7 +5,6 @@ import pytest
 
 from coaxer.compiler import distill
 
-
 FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "labels" / "demo"
 
 

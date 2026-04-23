@@ -1,8 +1,7 @@
 from pathlib import Path
 
 from coaxer.records import Record
-from coaxer.schema import Field, Schema, infer_schema, load_schema
-
+from coaxer.schema import Field, infer_schema, load_schema
 
 FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "labels" / "demo"
 
