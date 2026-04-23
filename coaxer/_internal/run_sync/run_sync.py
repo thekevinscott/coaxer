@@ -17,7 +17,7 @@ def run_sync[T](coro: Coroutine[Any, Any, T]) -> T:
     """
     if has_running_loop():
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(asyncio.run, coro)  # type: ignore[arg-type]
+            future = pool.submit(asyncio.run, coro)
             return future.result()  # type: ignore[return-value]
     else:
         return asyncio.run(coro)

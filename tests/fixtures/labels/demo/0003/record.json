@@ -1,0 +1,9 @@
+{
+  "id": "0003",
+  "inputs": {
+    "readme": "readme.md",
+    "description": "Best resources for learning Rust",
+    "stars": 1204
+  },
+  "output": "true"
+}

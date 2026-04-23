@@ -1,5 +1,5 @@
 site_name: coaxer
-site_description: Evals-first prompt optimization. Label examples, get better prompts.
+site_description: Label examples. Derive the prompt. Consume it as a string.
 site_url: https://thekevinscott.github.io/coaxer/
 repo_url: https://github.com/thekevinscott/coaxer
 repo_name: thekevinscott/coaxer
@@ -44,12 +44,10 @@ nav:
   - Overview: index.md
   - Guide:
       - Getting Started: guide/getting-started.md
-      - Labeling TUI: guide/labeling-tui.md
-      - Optimize Skill: guide/optimize-skill.md
       - Caching: guide/caching.md
   - API Reference:
+      - CoaxPrompt: api/coax-prompt.md
+      - CLI: api/cli.md
       - AgentLM: api/agent-lm.md
       - OpenAILM: api/openai-lm.md
-      - load_predict: api/load-predict.md
-      - CLI: api/cli.md
   - llms.txt: llms-full.md

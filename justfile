@@ -43,9 +43,9 @@ test-unit *args:
 test-cov:
     uv run pytest --cov --cov-report=term-missing
 
-# Run tests with coverage for CI (outputs XML, excludes e2e which needs a real PTY)
+# Run tests with coverage for CI (outputs XML)
 test-ci:
-    uv run pytest --cov --cov-report=xml --ignore=tests/e2e
+    uv run pytest --cov --cov-report=xml
 
 # Run integration tests
 test-integration:

@@ -1,0 +1,12 @@
+{
+  "inputs": {
+    "readme": {"desc": "Project README markdown"},
+    "description": {"desc": "Short repo description", "type": "str"},
+    "stars": {"desc": "GitHub star count", "type": "int"}
+  },
+  "output": {
+    "desc": "Whether the repo is a curated collection rather than an organic project",
+    "type": "enum",
+    "values": ["true", "false"]
+  }
+}

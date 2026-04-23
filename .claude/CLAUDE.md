@@ -45,7 +45,6 @@ TDD Order: integration tests first, then unit tests.
 
 - **Unit tests** (`coaxer/*_test.py`): colocated, mock everything except the function under test
 - **Integration tests** (`tests/integration/`): test multiple modules together with mocked externals (SDK, filesystem). ALL integration tests go here, not colocated.
-- **E2E tests** (`tests/e2e/`): curtaincall-based, real PTY, test actual user experience
 
 ### Running Tests
 
@@ -78,22 +77,24 @@ uv run just ci               # Full local CI (lint + format + typecheck + tests)
 ## Project Structure
 
 ```
-coaxer/                  # Main package
-  _internal/             # Private utilities (run_sync, etc.)
-  skills/optimize/       # /optimize skill (SKILL.md, installed via CLI)
-  lm.py                  # AgentLM - DSPy LM backed by Agent SDK
-  openai_lm.py           # OpenAILM - DSPy LM for OpenAI-compatible endpoints
-  load_predict.py        # Load optimized DSPy programs with fallback
-  tui.py                 # Textual labeling TUI (multi-field, pre-population)
-  cli.py                 # CLI entry point (coaxer install, coaxer label)
-  for_query.py           # Async generator over SDK query blocks
+coaxer/                   # Main package
+  _internal/              # Private utilities (run_sync, etc.)
+  prompt.py               # CoaxPrompt - str subclass, Jinja2 render
+  compiler.py             # distill() - label folder -> prompt artifact
+  records.py              # Read label folder into Record objects
+  schema.py               # Parse/infer _schema.json
+  signature.py            # Build DSPy Signature dynamically (internal)
+  cli.py                  # CLI entry point (coaxer distill)
+  lm.py                   # AgentLM - DSPy LM backed by Agent SDK
+  openai_lm.py            # OpenAILM - DSPy LM for OpenAI-compatible endpoints
+  for_query.py            # Async generator over SDK query blocks
   query_assistant_text.py # Extract text from assistant responses
-  extract_prompt.py      # Normalize DSPy prompt formats
-  dataclasses.py         # OpenAI-compatible response types
-karat/                   # Deprecated shim package (re-exports from coaxer)
+  extract_prompt.py       # Normalize DSPy prompt formats
+  dataclasses.py          # OpenAI-compatible response types
+karat/                    # Deprecated shim package (re-exports from coaxer)
 tests/
-  integration/           # Integration tests (TUI pilot, mocked SDK)
-  e2e/                   # End-to-end tests (subprocess CLI)
+  fixtures/labels/demo/   # Label-folder fixture used by distill + records tests
+  integration/            # Integration tests (mocked SDK)
 ```
 
 ## Key Commands
