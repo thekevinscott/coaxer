@@ -27,10 +27,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - id: plan
-        uses: thekevinscott/put-it-out-there@putitoutthere-v0.1.36
+      - uses: actions/setup-node@v4
         with:
-          command: plan
+          node-version: '20'
+      # Upstream's GitHub Action bundle (`thekevinscott/put-it-out-there@*`)
+      # is broken in all published tags: ncc merges the CLI and action
+      # entry-point guards into one file, so the CLI guard fires first
+      # and exits before the action wrapper runs. Call the npm CLI
+      # directly — it writes `matrix=...` to $GITHUB_OUTPUT itself.
+      - id: plan
+        run: npx -y putitoutthere@0.1.36 plan --json
 
   build:
     needs: plan
@@ -102,10 +108,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - uses: thekevinscott/put-it-out-there@putitoutthere-v0.1.36
-        with:
-          command: publish
-          dry_run: ${{ inputs.dry_run || 'false' }}
+      # See plan job note: invoke the CLI directly, not the broken action.
+      - run: npx -y putitoutthere@0.1.36 publish ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
           # NODE_AUTH_TOKEN (not NPM_TOKEN) matches the .npmrc template that
           # actions/setup-node writes when registry-url is set. putitoutthere's
