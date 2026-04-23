@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
       - id: plan
-        uses: thekevinscott/put-it-out-there@v0
+        uses: thekevinscott/put-it-out-there@putitoutthere-v0.1.36
         with:
           command: plan
 
@@ -102,7 +102,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - uses: thekevinscott/put-it-out-there@v0
+      - uses: thekevinscott/put-it-out-there@putitoutthere-v0.1.36
         with:
           command: publish
           dry_run: ${{ inputs.dry_run || 'false' }}

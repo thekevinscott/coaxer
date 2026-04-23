@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: thekevinscott/put-it-out-there@v0
+      - uses: thekevinscott/put-it-out-there@putitoutthere-v0.1.36
         with:
           command: plan
           dry_run: true
