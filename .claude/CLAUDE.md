@@ -91,7 +91,6 @@ coaxer/                   # Main package
   query_assistant_text.py # Extract text from assistant responses
   extract_prompt.py       # Normalize DSPy prompt formats
   dataclasses.py          # OpenAI-compatible response types
-karat/                    # Deprecated shim package (re-exports from coaxer)
 tests/
   fixtures/labels/demo/   # Label-folder fixture used by distill + records tests
   integration/            # Integration tests (mocked SDK)
