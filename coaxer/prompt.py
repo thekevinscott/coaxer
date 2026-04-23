@@ -1,6 +1,6 @@
-"""`CoaxPrompt` -- a compiled prompt as a `str` subclass.
+"""`CoaxedPrompt` -- a compiled prompt as a `str` subclass.
 
-`CoaxPrompt("prompts/foo")` reads `prompt.jinja` and behaves as its raw
+`CoaxedPrompt("prompts/foo")` reads `prompt.jinja` and behaves as its raw
 template string everywhere `str` is accepted. `p(**vars)` renders the
 template with Jinja2 `StrictUndefined` (missing variables raise).
 """
@@ -15,12 +15,12 @@ from jinja2 import Environment, StrictUndefined, Template
 _ENV = Environment(undefined=StrictUndefined, keep_trailing_newline=True)
 
 
-class CoaxPrompt(str):
+class CoaxedPrompt(str):
     _path: Path
     _bound: dict[str, Any]
     _template: Template
 
-    def __new__(cls, path: str | Path, **bound: Any) -> CoaxPrompt:
+    def __new__(cls, path: str | Path, **bound: Any) -> CoaxedPrompt:
         folder = Path(path)
         template_text = (folder / "prompt.jinja").read_text()
         instance = super().__new__(cls, template_text)

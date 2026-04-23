@@ -9,8 +9,8 @@ Coaxer turns labeled examples into prompts. You label behavior you want, coaxer 
 The library provides:
 
 1. **Label folder format** — one directory per record; `record.json` + sibling files for text/binary.
-2. **`coaxer distill` CLI** — reads the folder, optionally runs DSPy 3 + GEPA optimization, writes a prompt artifact.
-3. **`CoaxPrompt`** — a `str` subclass that loads `prompt.jinja` and renders it via Jinja2 at call time.
+2. **`coax` CLI** — reads the folder, optionally runs DSPy 3 + GEPA optimization, writes a prompt artifact.
+3. **`CoaxedPrompt`** — a `str` subclass that loads `prompt.jinja` and renders it via Jinja2 at call time.
 4. **`AgentLM` / `OpenAILM`** — DSPy `BaseLM` backends for the optional compile-time optimizer (Claude via Agent SDK, or any OpenAI-compatible endpoint).
 
 The prompt is a build artifact. Labeled examples are the source of truth.
@@ -77,10 +77,10 @@ Supported types: `str`, `int`, `float`, `bool`, `bytes`, `enum` (with `values`).
 
 ## CLI
 
-### `coaxer distill`
+### `coax`
 
 ```bash
-coaxer distill <labels-dir> --out <prompts-dir> [--optimizer {none,gepa}] [--output-name NAME]
+coax <labels-dir> --out <prompts-dir> [--optimizer {none,gepa}] [--output-name NAME]
 ```
 
 - `<labels-dir>` — path to the label folder.
@@ -97,20 +97,20 @@ Writes:
 | `dspy.json` | `--optimizer gepa` | DSPy program state. |
 | `history.jsonl` | Always | One line per compile. |
 
-## `CoaxPrompt`
+## `CoaxedPrompt`
 
 ```python
-from coaxer import CoaxPrompt
+from coaxer import CoaxedPrompt
 
-p = CoaxPrompt("prompts/repo-classification", role="classifier")
+p = CoaxedPrompt("prompts/repo-classification", role="classifier")
 filled = p(readme=new_readme, stars=1200)
 ```
 
-- `CoaxPrompt(path, **bound)` — str subclass. `__new__` reads `prompt.jinja`. `**bound` sets default variables.
+- `CoaxedPrompt(path, **bound)` — str subclass. `__new__` reads `prompt.jinja`. `**bound` sets default variables.
 - `str(p)` — raw template.
 - `p(**vars)` — Jinja2 `StrictUndefined` render. Missing vars raise `UndefinedError`. Call-time vars override bound defaults.
 
-Because `CoaxPrompt` is a `str`, it drops into any API that accepts a string.
+Because `CoaxedPrompt` is a `str`, it drops into any API that accepts a string.
 
 ## `AgentLM`
 
@@ -150,13 +150,13 @@ lm = OpenAILM(model="gpt-4o", base_url="https://api.openai.com/v1", api_key="sk-
 ## End-to-end example
 
 ```bash
-coaxer distill labels/repo-classification --out prompts/repo-classification
+coax labels/repo-classification --out prompts/repo-classification
 ```
 
 ```python
-from coaxer import CoaxPrompt
+from coaxer import CoaxedPrompt
 
-p = CoaxPrompt("prompts/repo-classification")
+p = CoaxedPrompt("prompts/repo-classification")
 print(p(
     readme="# awesome-skills\n500+ curated Claude skills",
     description="A curated list of awesome Claude skills",

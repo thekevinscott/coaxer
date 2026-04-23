@@ -79,12 +79,12 @@ uv run just ci               # Full local CI (lint + format + typecheck + tests)
 ```
 coaxer/                   # Main package
   _internal/              # Private utilities (run_sync, etc.)
-  prompt.py               # CoaxPrompt - str subclass, Jinja2 render
+  prompt.py               # CoaxedPrompt - str subclass, Jinja2 render
   compiler.py             # distill() - label folder -> prompt artifact
   records.py              # Read label folder into Record objects
   schema.py               # Parse/infer _schema.json
   signature.py            # Build DSPy Signature dynamically (internal)
-  cli.py                  # CLI entry point (coaxer distill)
+  cli.py                  # CLI entry point (coax)
   lm.py                   # AgentLM - DSPy LM backed by Agent SDK
   openai_lm.py            # OpenAILM - DSPy LM for OpenAI-compatible endpoints
   for_query.py            # Async generator over SDK query blocks

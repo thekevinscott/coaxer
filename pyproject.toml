@@ -32,7 +32,7 @@ dev = [
 ]
 
 [project.scripts]
-coaxer = "coaxer.cli:main"
+coax = "coaxer.cli:main"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
