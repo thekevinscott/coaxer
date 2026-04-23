@@ -1,0 +1,9 @@
+{
+  "id": "0001",
+  "inputs": {
+    "readme": "readme.md",
+    "description": "A curated list of awesome Claude skills",
+    "stars": 521
+  },
+  "output": "true"
+}

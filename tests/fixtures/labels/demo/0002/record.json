@@ -1,0 +1,9 @@
+{
+  "id": "0002",
+  "inputs": {
+    "readme": "readme.md",
+    "description": "Fast JSON parser for Python",
+    "stars": 2840
+  },
+  "output": "false"
+}
