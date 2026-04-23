@@ -1,0 +1,22 @@
+name: Putitoutthere check
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: thekevinscott/put-it-out-there@v0
+        with:
+          command: plan
+          dry_run: true
+          fail_on_error: true

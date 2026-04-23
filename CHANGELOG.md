@@ -5,6 +5,7 @@
 ### Changed
 - **Breaking: CLI renamed to `coax`.** Replaces `coaxer distill`; the labels folder is now the top-level positional argument (`coax <labels> --out <prompts>`). No shim — the `coaxer` console script is gone.
 - **Breaking: `CoaxPrompt` renamed to `CoaxedPrompt`.** Import is now `from coaxer import CoaxedPrompt`.
+- **Release pipeline: swapped to [putitoutthere](https://github.com/thekevinscott/put-it-out-there).** Releases are now driven by a `release: <patch|minor|major|skip>` trailer on the merge commit (see `putitoutthere/AGENTS.md`). The cron-based daily patch-bump workflow and manual minor-release dispatch have been removed; a single `release.yml` handles plan/build/publish on push-to-main, with `putitoutthere-check.yml` running a PR dry-run.
 - **Breaking: public API replaced.** Coaxer no longer exposes DSPy. The new shape is:
   - A dir-per-record label folder (`labels/<name>/0001/record.json` + sibling files).
   - A `coax <labels> --out <prompts>` CLI that compiles the folder into `prompt.jinja` + `meta.json` + `dspy.json` + `history.jsonl`.

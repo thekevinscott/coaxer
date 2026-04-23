@@ -1,0 +1,13 @@
+# Put It Out There — release orchestration config.
+# Docs: https://github.com/thekevinscott/put-it-out-there
+
+[putitoutthere]
+version = 1
+
+[[package]]
+name = "coaxer"
+kind = "pypi"
+path = "."
+paths = ["coaxer/**", "pyproject.toml"]
+build = "hatch"
+first_version = "0.1.0"
