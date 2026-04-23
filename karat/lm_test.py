@@ -88,6 +88,48 @@ def describe_AgentLM():
             call_args = mock_run_sync.call_args
             assert call_args is not None
 
+        def it_routes_system_message_into_system_prompt_option(mock_run_sync, mock_query_async):
+            """System turn must land in ClaudeAgentOptions.system_prompt, not be dropped."""
+            lm = AgentLM()
+            lm.forward(
+                messages=[
+                    {"role": "system", "content": "You are a classifier."},
+                    {"role": "user", "content": "Classify this."},
+                ]
+            )
+            mock_query_async.assert_called_once()
+            args, kwargs = mock_query_async.call_args
+            assert args[0] == "Classify this."
+            assert kwargs.get("system_prompt") == "You are a classifier."
+
+        def it_preserves_demo_turns_in_user_prompt(mock_run_sync, mock_query_async):
+            """Few-shot demo turns must be flattened into user text, not dropped."""
+            lm = AgentLM()
+            lm.forward(
+                messages=[
+                    {"role": "system", "content": "Sys"},
+                    {"role": "user", "content": "ex1 input"},
+                    {"role": "assistant", "content": "ex1 output"},
+                    {"role": "user", "content": "final input"},
+                ]
+            )
+            prompt_arg = mock_query_async.call_args.args[0]
+            assert "ex1 input" in prompt_arg
+            assert "ex1 output" in prompt_arg
+            assert "final input" in prompt_arg
+
+        def it_does_not_overwrite_caller_system_prompt(mock_run_sync, mock_query_async):
+            """If caller passed system_prompt via kwargs, don't clobber it."""
+            lm = AgentLM(system_prompt="caller-set")
+            lm.forward(
+                messages=[
+                    {"role": "system", "content": "from-messages"},
+                    {"role": "user", "content": "Q"},
+                ]
+            )
+            kwargs = mock_query_async.call_args.kwargs
+            assert kwargs.get("system_prompt") == "caller-set"
+
         def it_uses_cached_query_when_cache_provided(mock_run_sync):
             mock_run_sync.return_value = "cached result"
             mock_cache = MagicMock()
