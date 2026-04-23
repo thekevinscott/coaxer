@@ -33,7 +33,7 @@ hooks:
 
 # Run type checker
 typecheck:
-    uv run ty check karat/
+    uv run ty check coaxer/
 
 # Run unit tests
 test-unit *args:
@@ -53,7 +53,7 @@ test-integration:
 
 # Watch unit tests
 test-unit-watch *args:
-    uv run ptw --now karat karat/ {{args}}
+    uv run ptw --now coaxer coaxer/ {{args}}
 
 # Watch integration tests
 test-integration-watch *args:
