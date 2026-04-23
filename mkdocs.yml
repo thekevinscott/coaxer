@@ -46,7 +46,7 @@ nav:
       - Getting Started: guide/getting-started.md
       - Caching: guide/caching.md
   - API Reference:
-      - CoaxPrompt: api/coax-prompt.md
+      - CoaxedPrompt: api/coaxed-prompt.md
       - CLI: api/cli.md
       - AgentLM: api/agent-lm.md
       - OpenAILM: api/openai-lm.md

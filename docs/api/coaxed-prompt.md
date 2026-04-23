@@ -1,24 +1,24 @@
-# `CoaxPrompt`
+# `CoaxedPrompt`
 
 A compiled prompt as a `str` subclass.
 
 ```python
-from coaxer import CoaxPrompt
+from coaxer import CoaxedPrompt
 
-p = CoaxPrompt("prompts/repo-classification", role="classifier")
+p = CoaxedPrompt("prompts/repo-classification", role="classifier")
 filled = p(readme=new_readme, stars=1200)
 ```
 
 ## Constructor
 
 ```python
-CoaxPrompt(path: str | Path, **bound: Any)
+CoaxedPrompt(path: str | Path, **bound: Any)
 ```
 
-- `path` — folder produced by `coaxer distill`. Must contain `prompt.jinja`.
+- `path` — folder produced by `coax`. Must contain `prompt.jinja`.
 - `**bound` — default values bound at construction time. Overridden by call-time keyword arguments.
 
-`__new__` reads `prompt.jinja` and stores the raw template as the underlying `str`. Because `CoaxPrompt` is a `str`, instances drop in anywhere a string is accepted (logging, LLM SDK `messages`, external template engines).
+`__new__` reads `prompt.jinja` and stores the raw template as the underlying `str`. Because `CoaxedPrompt` is a `str`, instances drop in anywhere a string is accepted (logging, LLM SDK `messages`, external template engines).
 
 ## `str(p)`
 

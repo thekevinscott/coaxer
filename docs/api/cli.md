@@ -1,13 +1,13 @@
 # CLI
 
-Coaxer exposes a single subcommand: `distill`.
+Coaxer exposes a single command: `coax`.
 
-## `coaxer distill`
+## `coax`
 
 Compiles a label folder into a reusable prompt artifact.
 
 ```bash
-coaxer distill <labels-dir> --out <prompts-dir> [--optimizer {none,gepa}] [--output-name NAME]
+coax <labels-dir> --out <prompts-dir> [--optimizer {none,gepa}] [--output-name NAME]
 ```
 
 ### Arguments
@@ -33,7 +33,7 @@ Four files land in `--out`:
 ### Example
 
 ```bash
-coaxer distill labels/repo-classification --out prompts/repo-classification --optimizer gepa
+coax labels/repo-classification --out prompts/repo-classification --optimizer gepa
 ```
 
-Consume the output with [`CoaxPrompt`](coax-prompt.md).
+Consume the output with [`CoaxedPrompt`](coaxed-prompt.md).

@@ -60,7 +60,7 @@ Without a schema, field names and types are inferred from the first record.
 ## Distill a prompt
 
 ```bash
-coaxer distill labels/repo-classification --out prompts/repo-classification
+coax labels/repo-classification --out prompts/repo-classification
 ```
 
 This writes four artifacts:
@@ -76,12 +76,12 @@ The default optimizer is `none` -- it emits a schema-derived template without ca
 
 ## Consume the prompt
 
-`CoaxPrompt` is a `str` subclass. The raw Jinja template is what `str(p)` returns, so the object drops in anywhere a string is accepted. `p(**vars)` renders it.
+`CoaxedPrompt` is a `str` subclass. The raw Jinja template is what `str(p)` returns, so the object drops in anywhere a string is accepted. `p(**vars)` renders it.
 
 ```python
-from coaxer import CoaxPrompt
+from coaxer import CoaxedPrompt
 
-p = CoaxPrompt("prompts/repo-classification")
+p = CoaxedPrompt("prompts/repo-classification")
 filled = p(
     readme="# awesome-skills\n\n500+ curated Claude skills",
     description="A curated list of awesome Claude skills",
@@ -92,7 +92,7 @@ filled = p(
 Missing variables raise `UndefinedError` (Jinja2 `StrictUndefined`). Bind defaults at construction time and override at call time:
 
 ```python
-p = CoaxPrompt("prompts/repo-classification", role="classifier")
+p = CoaxedPrompt("prompts/repo-classification", role="classifier")
 filled = p(role="summarizer", readme=..., stars=...)  # call-time wins
 ```
 
@@ -109,7 +109,7 @@ dspy.configure(lm=OpenAILM(model="llama3"))         # Ollama
 Then:
 
 ```bash
-coaxer distill labels/... --out prompts/... --optimizer gepa
+coax labels/... --out prompts/... --optimizer gepa
 ```
 
 ## Requirements

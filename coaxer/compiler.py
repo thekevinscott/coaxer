@@ -1,7 +1,7 @@
 """Distill pipeline: label folder → compiled prompt artifact.
 
 ```
-coaxer distill labels/foo --out prompts/foo
+coax labels/foo --out prompts/foo
 ```
 
 Reads records + schema, builds a DSPy signature, optionally runs an

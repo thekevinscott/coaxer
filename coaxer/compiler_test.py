@@ -48,11 +48,11 @@ def test_history_jsonl_appends(tmp_path: Path):
 
 
 def test_template_is_valid_jinja(tmp_path: Path):
-    from coaxer.prompt import CoaxPrompt
+    from coaxer.prompt import CoaxedPrompt
 
     out = tmp_path / "prompt_out"
     distill(FIXTURE, out, optimizer=None)
-    p = CoaxPrompt(out)
+    p = CoaxedPrompt(out)
     filled = p(readme="# hi", description="demo", stars=42)
     assert "# hi" in filled
     assert "42" in filled

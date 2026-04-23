@@ -49,7 +49,7 @@ labels/repo-classification/
 ## Distill
 
 ```bash
-coaxer distill labels/repo-classification --out prompts/repo-classification
+coax labels/repo-classification --out prompts/repo-classification
 ```
 
 Writes four files to the output folder:
@@ -66,18 +66,18 @@ Optimizer is opt-in. `--optimizer gepa` runs DSPy 3's GEPA pass and requires an 
 ## Consume
 
 ```python
-from coaxer import CoaxPrompt
+from coaxer import CoaxedPrompt
 
-p = CoaxPrompt("prompts/repo-classification", role="classifier")  # bind defaults
+p = CoaxedPrompt("prompts/repo-classification", role="classifier")  # bind defaults
 filled = p(readme=new_readme, stars=1200)                         # render at call time
 ```
 
-- `CoaxPrompt(path, **bound)` — `str` subclass; `__new__` reads `prompt.jinja`.
+- `CoaxedPrompt(path, **bound)` — `str` subclass; `__new__` reads `prompt.jinja`.
 - `str(p)` — raw template.
 - `p(**vars)` — Jinja2 `StrictUndefined` render; missing variables raise.
 - Call-time variables override bound defaults.
 
-Because `CoaxPrompt` is a `str`, it drops in anywhere a string is accepted (logging, OpenAI SDK `messages`, Anthropic SDK, DSPy signatures built externally, etc.).
+Because `CoaxedPrompt` is a `str`, it drops in anywhere a string is accepted (logging, OpenAI SDK `messages`, Anthropic SDK, DSPy signatures built externally, etc.).
 
 ## Compile LLMs
 
