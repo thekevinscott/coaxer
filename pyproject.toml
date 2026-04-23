@@ -45,7 +45,7 @@ source = "vcs"
 local_scheme = "no-local-version"
 
 [tool.hatch.build.targets.wheel]
-packages = ["coaxer", "karat"]
+packages = ["coaxer"]
 
 
 [tool.ruff]
@@ -67,7 +67,7 @@ max-statements = 50
 "tests/**/*.py" = ["PLR2004", "PLR0915", "C901", "ARG001"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["coaxer", "karat"]
+known-first-party = ["coaxer"]
 
 [tool.ruff.format]
 quote-style = "double"
