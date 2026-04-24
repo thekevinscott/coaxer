@@ -122,6 +122,12 @@ jobs:
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+      # putitoutthere shells out to `twine upload` for the actual PyPI
+      # push, so the publish runner needs Python + twine on PATH.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install twine
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
