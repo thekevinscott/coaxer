@@ -74,11 +74,15 @@ jobs:
         # latest git tag at build time — which at this point is still
         # the *previous* release. putitoutthere's tag creation happens
         # in the publish job, after this build runs. Feed the planned
-        # version through the setuptools-scm-compatible env var so the
-        # sdist filename matches what we're about to publish instead of
-        # ending up as `0.2.13.dev14` etc.
+        # version through setuptools-scm's global pretend-version env
+        # so the sdist filename matches what we're about to publish
+        # instead of ending up as `0.2.14.devN`.
+        #
+        # The per-package variant (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COAXER)
+        # is silently ignored by hatch-vcs — reproduced locally with
+        # both variants set vs unset; only the global one works.
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COAXER: ${{ matrix.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ matrix.version }}
         run: |
           cd ${{ matrix.path }}
           python -m pip install build

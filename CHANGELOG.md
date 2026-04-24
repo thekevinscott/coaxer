@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Fixed
+- **Release pipeline: use setuptools-scm's global `SETUPTOOLS_SCM_PRETEND_VERSION` env var.** The per-package `SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COAXER` added in the previous release is silently ignored by hatch-vcs (verified locally), which caused `0.2.14` to ship to PyPI as `0.2.14.dev2`. Switching to the global variant makes hatch-vcs honor putitoutthere's planned version as intended.
+
 ### Changed
 - **Release pipeline: upgraded to `putitoutthere@0.1.37`.** Dropped the hand-rolled entry-point workarounds now that upstream split the CLI entry into `dist/cli-bin.js` (the GHA bundle + `npm i -g`/`npx` symlink bugs we worked around are both fixed upstream). Bumped the plan + PR dry-run jobs from Node 20 → 24 to clear the deprecation warning. Set `SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COAXER` on the sdist build step so `hatch-vcs` honors putitoutthere's planned version instead of deriving a `0.2.X.devN` suffix from the pre-tag git history.
 - **Release config: `putitoutthere.toml` `paths` now includes `CHANGELOG.md`.** Changelog-only edits (and notes landing alongside substantive changes) now naturally trigger a patch release instead of silently being skipped by cascade detection.
