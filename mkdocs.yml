@@ -36,6 +36,9 @@ markdown_extensions:
   - admonition
   - pymdownx.highlight:
       anchor_linenums: true
+  - pymdownx.snippets:
+      base_path: [".", "docs"]
+      check_paths: true
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
@@ -50,4 +53,5 @@ nav:
       - CLI: api/cli.md
       - AgentLM: api/agent-lm.md
       - OpenAILM: api/openai-lm.md
+  - Migrations: migrations.md
   - llms.txt: llms-full.md
