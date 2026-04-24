@@ -10,4 +10,8 @@ kind = "pypi"
 path = "."
 paths = ["coaxer/**", "pyproject.toml"]
 build = "hatch"
+# Pre-putitoutthere releases used unprefixed `v{version}` tags (latest: v0.2.12).
+# Override the default `{name}-v{version}` so the planner keeps bumping from
+# that history instead of starting over at first_version.
+tag_format = "v{version}"
 first_version = "0.1.0"
