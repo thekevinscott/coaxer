@@ -35,8 +35,23 @@ jobs:
       # entry-point guards into one file, so the CLI guard fires first
       # and exits before the action wrapper runs. Call the npm CLI
       # directly — it writes `matrix=...` to $GITHUB_OUTPUT itself.
+      #
+      # Tracers below stay in until at least one successful release run
+      # — last attempt printed zero bytes to stdout in ~2.5s and we have
+      # no signal as to which step swallowed the output. `tee plan.json`
+      # + `test -s plan.json` turns silent empty into a hard failure.
       - id: plan
-        run: npx -y putitoutthere@0.1.36 plan --json
+        run: |
+          set -x
+          node --version
+          npm --version
+          git tag -l 'v*' --sort=-v:refname | head -5
+          git log --oneline -3
+          echo "--- diff vs v0.2.12 ---"
+          git diff --name-only v0.2.12..HEAD | head -20
+          echo "--- plan ---"
+          npx -y putitoutthere@0.1.36 plan --json | tee plan.json
+          test -s plan.json
 
   build:
     needs: plan
