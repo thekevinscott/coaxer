@@ -1,0 +1,32 @@
+name: Changelog
+
+on:
+  pull_request:
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    env:
+      BASE_REF: ${{ github.base_ref }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Require CHANGELOG.md update (unless skip-changelog trailer present)
+        run: |
+          git fetch origin "$BASE_REF" --depth=1
+          # Collect commit-message trailers in the PR range + the PR body, so the bypass
+          # works for "Squash and merge" (trailer in PR body → squashed commit body) and
+          # "Rebase and merge" (trailer in any individual commit).
+          trailers="$({ git log --format=%B "origin/$BASE_REF..HEAD"; printf '%s\n' "$PR_BODY"; } 2>/dev/null)"
+          if printf '%s\n' "$trailers" | grep -qiE '^[[:space:]]*skip-changelog:[[:space:]]*true[[:space:]]*$'; then
+            echo "skip-changelog: true trailer present; bypassing CHANGELOG.md requirement."
+            exit 0
+          fi
+          if git diff --name-only "origin/$BASE_REF...HEAD" | grep -qx CHANGELOG.md; then
+            echo "CHANGELOG.md updated"
+          else
+            echo "::error::CHANGELOG.md must be updated in every PR. Add an entry under ## Unreleased (see AGENTS.md for format), or add 'skip-changelog: true' as a trailer on any commit or in the PR body to bypass this check."
+            exit 1
+          fi

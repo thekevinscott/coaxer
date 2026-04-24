@@ -5,20 +5,17 @@
 ### Added
 - **`AGENTS.md` at the repo root consolidates contributor instructions.** Moved everything that was previously in `.claude/CLAUDE.md` (PR workflow, testing, code style, commit conventions, project layout) into the agent-agnostic `AGENTS.md` convention so tools beyond Claude Code can pick it up. Root `CLAUDE.md` now just `@`-includes `AGENTS.md` and `putitoutthere/AGENTS.md`.
 - **Changelog / migration policy codified in `AGENTS.md`.** Every PR must add a bullet under `## Unreleased`; public-facing changes also require a `MIGRATIONS.md` entry using the 5-section template (summary, required changes, deprecations removed, behavior changes, verification). Opt out of the changelog check with a `skip-changelog: true` commit trailer.
+- **`MIGRATIONS.md` is the canonical downstream-consumer upgrade guide.** Repo-root file with a 5-section per-version template (summary, required changes, deprecations removed, behavior changes, verification). Published on the docs site at `/migrations/` via `pymdownx.snippets` so there is a single source of truth.
 
 ### Changed
 - **`.gitignore`: ignore agent worktrees at `.claude/worktrees/`.** Matches the existing `.worktrees` entry; the agent-tool worktree path sits under `.claude/` rather than at the repo root.
-
-### Fixed
-- **Release pipeline: use setuptools-scm's global `SETUPTOOLS_SCM_PRETEND_VERSION` env var.** The per-package `SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COAXER` added in the previous release is silently ignored by hatch-vcs (verified locally), which caused `0.2.14` to ship to PyPI as `0.2.14.dev2`. Switching to the global variant makes hatch-vcs honor putitoutthere's planned version as intended.
-
-### Changed
+- **CI now fails PRs that don't update `CHANGELOG.md`.** Every PR — including internal-only refactors, CI changes, and docs — must add a bullet under `## Unreleased`. Bypass with a `skip-changelog: true` commit trailer (the trailer is honored when present in any commit in the PR or in the PR body for "Squash and merge"). We don't follow semver strictly enough to rely on version numbers, so the changelog is the audit trail.
 - **Release pipeline: upgraded to `putitoutthere@0.1.37`.** Dropped the hand-rolled entry-point workarounds now that upstream split the CLI entry into `dist/cli-bin.js` (the GHA bundle + `npm i -g`/`npx` symlink bugs we worked around are both fixed upstream). Bumped the plan + PR dry-run jobs from Node 20 → 24 to clear the deprecation warning. Set `SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COAXER` on the sdist build step so `hatch-vcs` honors putitoutthere's planned version instead of deriving a `0.2.X.devN` suffix from the pre-tag git history.
 - **Release config: `putitoutthere.toml` `paths` now includes `CHANGELOG.md`.** Changelog-only edits (and notes landing alongside substantive changes) now naturally trigger a patch release instead of silently being skipped by cascade detection.
-- **Breaking: CLI renamed to `coax`.** Replaces `coaxer distill`; the labels folder is now the top-level positional argument (`coax <labels> --out <prompts>`). No shim — the `coaxer` console script is gone.
-- **Breaking: `CoaxPrompt` renamed to `CoaxedPrompt`.** Import is now `from coaxer import CoaxedPrompt`.
+- **Breaking: CLI renamed to `coax`.** Replaces `coaxer distill`; the labels folder is now the top-level positional argument (`coax <labels> --out <prompts>`). No shim — the `coaxer` console script is gone. See [MIGRATIONS.md](MIGRATIONS.md#03x-public-api-replaced) for upgrade instructions.
+- **Breaking: `CoaxPrompt` renamed to `CoaxedPrompt`.** Import is now `from coaxer import CoaxedPrompt`. See [MIGRATIONS.md](MIGRATIONS.md#03x-public-api-replaced) for upgrade instructions.
 - **Release pipeline: swapped to [putitoutthere](https://github.com/thekevinscott/put-it-out-there).** Releases are now driven by a `release: <patch|minor|major|skip>` trailer on the merge commit (see `putitoutthere/AGENTS.md`). The cron-based daily patch-bump workflow and manual minor-release dispatch have been removed; a single `release.yml` handles plan/build/publish on push-to-main, with `putitoutthere-check.yml` running a PR dry-run.
-- **Breaking: public API replaced.** Coaxer no longer exposes DSPy. The new shape is:
+- **Breaking: public API replaced.** Coaxer no longer exposes DSPy. See [MIGRATIONS.md](MIGRATIONS.md#03x-public-api-replaced) for upgrade instructions. The new shape is:
   - A dir-per-record label folder (`labels/<name>/0001/record.json` + sibling files).
   - A `coax <labels> --out <prompts>` CLI that compiles the folder into `prompt.jinja` + `meta.json` + `dspy.json` + `history.jsonl`.
   - A `CoaxedPrompt(path)` `str` subclass that loads `prompt.jinja` and renders it via Jinja2 `StrictUndefined` at call time (`p(readme=..., stars=...)`).
@@ -32,12 +29,9 @@
 - **`/optimize` skill** (`coaxer install` CLI, `coaxer/skills/`, `docs/guide/optimize-skill.md`). The skill's workflow is now `coax`.
 - **`load_predict`** (`coaxer.load_predict`, `docs/api/load-predict.md`). DSPy is no longer part of the public surface.
 
-### Migration
-- `coaxer distill <labels> --out <prompts>` → `coax <labels> --out <prompts>`.
-- `from coaxer import CoaxPrompt` → `from coaxer import CoaxedPrompt`.
-- `from coaxer import load_predict` → use `CoaxedPrompt("prompts/<name>")` after running `coax`.
-- `coaxer label` → label folder is edited directly (JSON + sibling files) or populated by an agent.
-- `coaxer install` → no replacement; skill is gone.
+### Fixed
+- **Release pipeline: use setuptools-scm's global `SETUPTOOLS_SCM_PRETEND_VERSION` env var.** The per-package `SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COAXER` added in the previous release is silently ignored by hatch-vcs (verified locally), which caused `0.2.14` to ship to PyPI as `0.2.14.dev2`. Switching to the global variant makes hatch-vcs honor putitoutthere's planned version as intended.
+- **GEPA optimizer: metric now accepts DSPy 3's required 5-arg signature.** Previously `coax --optimizer gepa` raised `TypeError: GEPA metric must accept five arguments` on any run; the inner metric in `_run_gepa` has been updated to `(gold, pred, trace, pred_name, pred_trace)` per DSPy 3's `inspect.signature(...).bind` check. No public API change. (#26)
 
 ## 0.2.x
 
