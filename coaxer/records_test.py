@@ -7,6 +7,22 @@ from coaxer.records import Record, load_records
 FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "labels" / "demo"
 
 
+def _write_schema(folder: Path, inputs: dict, output: dict | None = None) -> None:
+    import json as _json
+
+    payload = {"inputs": inputs, "output": output or {"type": "str"}}
+    (folder / "_schema.json").write_text(_json.dumps(payload))
+
+
+def _write_record(folder: Path, rid: str, inputs: dict, output: str = "y") -> Path:
+    import json as _json
+
+    rec = folder / rid
+    rec.mkdir()
+    (rec / "record.json").write_text(_json.dumps({"id": rid, "inputs": inputs, "output": output}))
+    return rec
+
+
 def test_loads_all_records_from_folder():
     records = load_records(FIXTURE)
     assert len(records) == 3
@@ -50,8 +66,81 @@ def test_missing_sibling_file_raises(tmp_path: Path):
     (rec / "record.json").write_text(
         '{"id": "0001", "inputs": {"readme": "missing.md"}, "output": "y"}'
     )
+    _write_schema(tmp_path, {"readme": {"type": "file"}})
     with pytest.raises(FileNotFoundError):
         load_records(tmp_path)
+
+
+def test_scalar_with_slash_returned_verbatim_without_schema(tmp_path: Path):
+    """Scalar strings containing '/' (e.g. 'owner/repo') are not sibling files."""
+    _write_record(tmp_path, "0001", {"repo_name": "expo/skills"})
+    records = load_records(tmp_path)
+    assert records[0].inputs["repo_name"] == "expo/skills"
+
+
+def test_scalar_with_slash_returned_verbatim_when_schema_not_file_backed(tmp_path: Path):
+    """Explicit non-file schema type keeps slashy scalars as-is."""
+    _write_schema(tmp_path, {"repo_name": {"type": "str"}})
+    _write_record(tmp_path, "0001", {"repo_name": "expo/skills"})
+    records = load_records(tmp_path)
+    assert records[0].inputs["repo_name"] == "expo/skills"
+
+
+def test_date_string_with_slashes_returned_verbatim(tmp_path: Path):
+    """YYYY/MM/DD dates are valid scalar strings, not sibling files."""
+    _write_record(tmp_path, "0001", {"when": "2024/01/15"})
+    records = load_records(tmp_path)
+    assert records[0].inputs["when"] == "2024/01/15"
+
+
+def test_extensioned_string_returned_verbatim_when_schema_not_file_backed(tmp_path: Path):
+    """A string ending in .md when schema says str should not try sibling lookup."""
+    _write_schema(tmp_path, {"title": {"type": "str"}})
+    _write_record(tmp_path, "0001", {"title": "notes.md"})
+    records = load_records(tmp_path)
+    assert records[0].inputs["title"] == "notes.md"
+
+
+def test_implicit_sibling_resolution_when_file_exists(tmp_path: Path):
+    """Backwards-compat: if no schema and the sibling exists on disk, read it."""
+    rec = _write_record(tmp_path, "0001", {"readme": "readme.md"})
+    (rec / "readme.md").write_text("# hello")
+    records = load_records(tmp_path)
+    assert records[0].inputs["readme"] == "# hello"
+
+
+def test_schema_declared_file_field_resolves(tmp_path: Path):
+    """`type: file` in schema resolves sibling file contents."""
+    rec = _write_record(tmp_path, "0001", {"doc": "doc.md"})
+    (rec / "doc.md").write_text("# doc body")
+    _write_schema(tmp_path, {"doc": {"type": "file"}})
+    records = load_records(tmp_path)
+    assert records[0].inputs["doc"] == "# doc body"
+
+
+def test_schema_backing_file_field_resolves(tmp_path: Path):
+    """`backing: file` in schema resolves sibling file contents."""
+    rec = _write_record(tmp_path, "0001", {"doc": "doc.md"})
+    (rec / "doc.md").write_text("# doc body")
+    _write_schema(tmp_path, {"doc": {"type": "str", "backing": "file"}})
+    records = load_records(tmp_path)
+    assert records[0].inputs["doc"] == "# doc body"
+
+
+def test_schema_file_field_missing_raises(tmp_path: Path):
+    """If schema declares a file field but file is missing, raise."""
+    _write_record(tmp_path, "0001", {"doc": "missing.md"})
+    _write_schema(tmp_path, {"doc": {"type": "file"}})
+    with pytest.raises(FileNotFoundError):
+        load_records(tmp_path)
+
+
+def test_schema_file_field_with_slash_in_value_is_not_treated_as_path(tmp_path: Path):
+    """A schema-declared non-file field must not treat slashes as path separators."""
+    _write_schema(tmp_path, {"slug": {"type": "str"}})
+    _write_record(tmp_path, "0001", {"slug": "a/b/c"})
+    records = load_records(tmp_path)
+    assert records[0].inputs["slug"] == "a/b/c"
 
 
 def test_reads_binary_sibling_as_bytes(tmp_path: Path):

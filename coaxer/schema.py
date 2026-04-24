@@ -21,6 +21,7 @@ class Field:
     type: str = "str"
     desc: str | None = None
     values: list[str] | None = None
+    backing: str | None = None
 
 
 @dataclass
@@ -44,6 +45,7 @@ def _field_from_dict(d: dict) -> Field:
         type=d.get("type", "str"),
         desc=d.get("desc"),
         values=d.get("values"),
+        backing=d.get("backing"),
     )
 
 
