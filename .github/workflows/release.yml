@@ -131,6 +131,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+      # putitoutthere creates annotated tags (`git tag -a`), which
+      # require committer identity. Hosted runners have none by default.
+      - name: Configure git identity for tagging
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
       # See plan job note: install via npm + invoke via node+resolved path
       # to side-step the upstream symlink entry-point bug.
       - run: |
