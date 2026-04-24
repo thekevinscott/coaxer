@@ -11,6 +11,7 @@ that the stubbed program state lands on disk via the real
 
 from __future__ import annotations
 
+import inspect
 import json
 from pathlib import Path
 from unittest.mock import patch
@@ -40,6 +41,26 @@ class _StubOptimizer:
 
     def compile(self, program, *, trainset):
         self.compile_calls.append((program, trainset))
+        return _StubProgram()
+
+
+class _MetricCapturingOptimizer:
+    """Mirrors DSPy 3's ``dspy.GEPA.__init__`` metric-signature check.
+
+    DSPy 3 calls ``inspect.signature(metric).bind(None, None, None, None, None)``
+    to enforce a 5-arg contract ``(gold, pred, trace, pred_name, pred_trace)``.
+    Using a stub that replicates this check keeps the test fast (no real GEPA
+    loop) while still failing if ``_run_gepa``'s metric drifts from the
+    contract.
+    """
+
+    captured_metric: object = None
+
+    def __init__(self, *, metric: object, **_: object) -> None:
+        inspect.signature(metric).bind(None, None, None, None, None)
+        _MetricCapturingOptimizer.captured_metric = metric
+
+    def compile(self, program, *, trainset):  # noqa: ARG002
         return _StubProgram()
 
 
@@ -79,3 +100,33 @@ def test_distill_gepa_meta_records_optimizer(tmp_path: Path) -> None:
     meta = json.loads((out / "meta.json").read_text())
     assert meta["optimizer"] == "gepa"
     assert meta["example_count"] == 3
+
+
+def test_distill_gepa_metric_accepts_dspy3_five_arg_signature(tmp_path: Path) -> None:
+    """``_run_gepa``'s metric must satisfy DSPy 3's 5-arg contract.
+
+    Regression test for https://github.com/thekevinscott/coaxer/issues/26:
+    DSPy 3 validates ``inspect.signature(metric).bind(None, None, None, None, None)``
+    inside ``dspy.GEPA.__init__``. A 3-arg metric raises TypeError there.
+    """
+    out = tmp_path / "out"
+    _MetricCapturingOptimizer.captured_metric = None
+
+    with (
+        patch("coaxer.lm.run_sync", return_value="true"),
+        patch("dspy.GEPA", _MetricCapturingOptimizer),
+    ):
+        distill(FIXTURE, out, lm=AgentLM(), optimizer="gepa")
+
+    metric = _MetricCapturingOptimizer.captured_metric
+    assert metric is not None, "metric was never passed to dspy.GEPA"
+    # The 5-arg bind must succeed; this is the exact check DSPy 3 runs.
+    inspect.signature(metric).bind(None, None, None, None, None)
+
+    # Sanity: scoring still works -- matching gold/pred yields 1.0, mismatch 0.0.
+    class _Obj:
+        def __init__(self, **kwargs: object) -> None:
+            self.__dict__.update(kwargs)
+
+    assert metric(_Obj(output="true"), _Obj(output="true")) == 1.0
+    assert metric(_Obj(output="true"), _Obj(output="false")) == 0.0
