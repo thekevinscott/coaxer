@@ -30,27 +30,29 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      # Upstream's GitHub Action bundle (`thekevinscott/put-it-out-there@*`)
-      # is broken in all published tags: ncc merges the CLI and action
-      # entry-point guards into one file, so the CLI guard fires first
-      # and exits before the action wrapper runs. Call the npm CLI
-      # directly — it writes `matrix=...` to $GITHUB_OUTPUT itself.
+      # Upstream putitoutthere has two entry-point bugs we work around:
       #
-      # Tracers below stay in until at least one successful release run
-      # — last attempt printed zero bytes to stdout in ~2.5s and we have
-      # no signal as to which step swallowed the output. `tee plan.json`
-      # + `test -s plan.json` turns silent empty into a hard failure.
+      # 1. The GitHub Action bundle (`thekevinscott/put-it-out-there@*`)
+      #    is broken in all published tags — ncc merges the CLI guard
+      #    and the action wrapper's guard into one file, so the CLI
+      #    guard fires first and exits before the wrapper runs.
+      # 2. The CLI's own entry-point guard compares `import.meta.url`
+      #    to `file://${process.argv[1]}`, but node resolves symlinks
+      #    for import.meta.url and NOT for argv[1]. `npx -y <pkg>` and
+      #    `npm install -g <pkg>` both invoke the CLI via a bin symlink,
+      #    so the guard is false, `main()` never runs, and the process
+      #    silently exits 0 with zero bytes of stdout.
+      #
+      # Workaround: `npm install -g` to lay the files down, then invoke
+      # via `node $(npm root -g)/putitoutthere/dist/cli.js` — that's a
+      # non-symlinked path so argv[1] and import.meta.url match.
+      #
+      # `tee plan.json` + `test -s plan.json` remains so any future
+      # silent-empty regression trips the step instead of succeeding.
       - id: plan
         run: |
-          set -x
-          node --version
-          npm --version
-          git tag -l 'v*' --sort=-v:refname | head -5
-          git log --oneline -3
-          echo "--- diff vs v0.2.12 ---"
-          git diff --name-only v0.2.12..HEAD | head -20
-          echo "--- plan ---"
-          npx -y putitoutthere@0.1.36 plan --json | tee plan.json
+          npm install -g putitoutthere@0.1.36
+          node "$(npm root -g)/putitoutthere/dist/cli.js" plan --json | tee plan.json
           test -s plan.json
 
   build:
@@ -123,8 +125,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-      # See plan job note: invoke the CLI directly, not the broken action.
-      - run: npx -y putitoutthere@0.1.36 publish ${{ inputs.dry_run && '--dry-run' || '' }}
+      # See plan job note: install via npm + invoke via node+resolved path
+      # to side-step the upstream symlink entry-point bug.
+      - run: |
+          npm install -g putitoutthere@0.1.36
+          node "$(npm root -g)/putitoutthere/dist/cli.js" publish ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
           # NODE_AUTH_TOKEN (not NPM_TOKEN) matches the .npmrc template that
           # actions/setup-node writes when registry-url is set. putitoutthere's
