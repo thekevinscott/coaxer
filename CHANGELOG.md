@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Added
+- **`AGENTS.md` at the repo root consolidates contributor instructions.** Moved everything that was previously in `.claude/CLAUDE.md` (PR workflow, testing, code style, commit conventions, project layout) into the agent-agnostic `AGENTS.md` convention so tools beyond Claude Code can pick it up. Root `CLAUDE.md` now just `@`-includes `AGENTS.md` and `putitoutthere/AGENTS.md`.
+- **Changelog / migration policy codified in `AGENTS.md`.** Every PR must add a bullet under `## Unreleased`; public-facing changes also require a `MIGRATIONS.md` entry using the 5-section template (summary, required changes, deprecations removed, behavior changes, verification). Opt out of the changelog check with a `skip-changelog: true` commit trailer.
+
+### Changed
+- **`.gitignore`: ignore agent worktrees at `.claude/worktrees/`.** Matches the existing `.worktrees` entry; the agent-tool worktree path sits under `.claude/` rather than at the repo root.
+
 ### Fixed
 - **Release pipeline: use setuptools-scm's global `SETUPTOOLS_SCM_PRETEND_VERSION` env var.** The per-package `SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COAXER` added in the previous release is silently ignored by hatch-vcs (verified locally), which caused `0.2.14` to ship to PyPI as `0.2.14.dev2`. Switching to the global variant makes hatch-vcs honor putitoutthere's planned version as intended.
 

@@ -36,7 +36,63 @@ Before considering a PR complete:
 1. **CI checks pass** -- monitor with `gh pr checks <pr-number>` or `gh run list`
 2. **GPG commits are verified** -- all commits must be signed
 3. **No merge conflicts** -- rebase on main if needed
-4. **Changelog updated** -- if user-facing changes
+4. **CHANGELOG.md updated** -- **every PR** adds at least one bullet under `## Unreleased`. No exceptions: bug fixes, refactors, CI, docs, internal-only. We don't follow semver strictly enough to rely on version numbers as the signal, so the audit trail lives in the changelog. Enforced by the `changelog` CI job.
+   - **Bypass:** add the trailer `skip-changelog: true` to the PR's merge-commit body (or to every commit in a rebase-merge branch) to skip the check. Use sparingly — dependabot bumps, trivial typo fixes inside docs where the CHANGELOG itself is the touched file, etc. If in doubt, add a line to the changelog.
+5. **MIGRATIONS.md updated** -- if the PR changes any public-facing surface (see *Scope* below), add a versioned entry to `MIGRATIONS.md` using the template in the next section.
+
+### Changelog format
+
+- Sections under `## Unreleased` follow [Keep a Changelog](https://keepachangelog.com): `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed`, `### Security`.
+- Each bullet starts with a bold lead-in summarizing the change, then explains the *why* in 1-2 sentences. See the existing `## Unreleased` entries for the expected voice.
+- Reference the PR/issue number at the end of the bullet when relevant (`(#27)`).
+- When the change ships with a migration entry, cross-link: `See [MIGRATIONS.md](MIGRATIONS.md#<anchor>).`
+
+### Migration guide (MIGRATIONS.md)
+
+`MIGRATIONS.md` at the repo root is the **source of truth** for downstream-consumer upgrade instructions. It's also published on the docs site (mkdocs pulls it in directly — do not duplicate content; edit `MIGRATIONS.md` and the docs page updates on the next build).
+
+Each migration entry is scoped to the release that introduced the change and uses this template:
+
+```markdown
+## <version-or-unreleased> — <short slug>
+
+### (a) Summary
+One paragraph: what broke, why the change was made, who is affected.
+
+### (b) Required changes
+Table of before/after snippets for every public-facing touch point: config,
+CLI invocation, action inputs, imports, function signatures.
+
+| Area        | Before                | After                  |
+| ----------- | --------------------- | ---------------------- |
+| Import      | `from karat import X` | `from coaxer import X` |
+| CLI command | `coaxer distill ...`  | `coax ...`             |
+
+### (c) Deprecations removed
+List anything previously emitting a `DeprecationWarning` that is now fully
+gone. If nothing, write "None."
+
+### (d) Behavior changes without code changes
+Same API, different runtime behavior: tag formats, exit codes, default values,
+file-layout assumptions, network vs. offline behavior, etc. If nothing, write
+"None."
+
+### (e) Verification
+The exact command a consumer runs to confirm the upgrade worked, plus the
+expected output (or the error that proves they forgot a step). Prefer a
+dry-run / non-destructive check.
+```
+
+Mark the corresponding CHANGELOG bullet in `### Changed` / `### Removed` / `### Deprecated` with **Breaking:** when the migration is required for consumers to keep working.
+
+**Scope -- what counts as public-facing:**
+- Anything exported from `coaxer/__init__.py`.
+- The `coax` CLI surface: flags, positional args, exit codes, stdout/stderr shape.
+- The label-folder layout: `_schema.json`, `record.json`, sibling-file conventions.
+- The compiled artifact layout: `prompt.jinja`, `meta.json`, `dspy.json`, `history.jsonl`.
+- The `AgentLM` / `OpenAILM` constructor kwargs and return shape.
+
+Changes to any of these require a `MIGRATIONS.md` entry even if the `release:` trailer is `patch`.
 
 ## Testing (Red/Green TDD, Outside-In)
 
@@ -78,6 +134,11 @@ uv run just ci               # Full local CI (lint + format + typecheck + tests)
 - `chore:` -- CI, tooling, maintenance
 - `refactor:` -- Code restructuring
 - `docs:` -- Documentation
+
+### Trailers
+
+- `release: <patch|minor|major|skip>` -- determines the release bump on merge. See `putitoutthere/AGENTS.md` for scoping and semantics.
+- `skip-changelog: true` -- bypass the `changelog` CI job for this PR. Use rarely.
 
 ## Project Structure
 
