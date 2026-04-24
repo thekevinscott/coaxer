@@ -29,30 +29,13 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      # Upstream putitoutthere has two entry-point bugs we work around:
-      #
-      # 1. The GitHub Action bundle (`thekevinscott/put-it-out-there@*`)
-      #    is broken in all published tags — ncc merges the CLI guard
-      #    and the action wrapper's guard into one file, so the CLI
-      #    guard fires first and exits before the wrapper runs.
-      # 2. The CLI's own entry-point guard compares `import.meta.url`
-      #    to `file://${process.argv[1]}`, but node resolves symlinks
-      #    for import.meta.url and NOT for argv[1]. `npx -y <pkg>` and
-      #    `npm install -g <pkg>` both invoke the CLI via a bin symlink,
-      #    so the guard is false, `main()` never runs, and the process
-      #    silently exits 0 with zero bytes of stdout.
-      #
-      # Workaround: `npm install -g` to lay the files down, then invoke
-      # via `node $(npm root -g)/putitoutthere/dist/cli.js` — that's a
-      # non-symlinked path so argv[1] and import.meta.url match.
-      #
-      # `tee plan.json` + `test -s plan.json` remains so any future
-      # silent-empty regression trips the step instead of succeeding.
+          node-version: '24'
+      # `tee plan.json` + `test -s plan.json` guards against a silent-empty
+      # regression. Prior workarounds for the CLI symlink / action-bundle
+      # entry-point bugs were removed once they landed in putitoutthere@0.1.37.
       - id: plan
         run: |
-          npm install -g putitoutthere@0.1.36
-          node "$(npm root -g)/putitoutthere/dist/cli.js" plan --json | tee plan.json
+          npx -y putitoutthere@0.1.37 plan --json | tee plan.json
           test -s plan.json
 
   build:
@@ -87,6 +70,15 @@ jobs:
           working-directory: ${{ matrix.path }}
       - name: Build sdist (setuptools/hatch)
         if: matrix.kind == 'pypi' && matrix.build != 'maturin' && matrix.target == 'sdist'
+        # hatch-vcs (and setuptools-scm) derive the version from the
+        # latest git tag at build time — which at this point is still
+        # the *previous* release. putitoutthere's tag creation happens
+        # in the publish job, after this build runs. Feed the planned
+        # version through the setuptools-scm-compatible env var so the
+        # sdist filename matches what we're about to publish instead of
+        # ending up as `0.2.13.dev14` etc.
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COAXER: ${{ matrix.version }}
         run: |
           cd ${{ matrix.path }}
           python -m pip install build
@@ -137,11 +129,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      # See plan job note: install via npm + invoke via node+resolved path
-      # to side-step the upstream symlink entry-point bug.
-      - run: |
-          npm install -g putitoutthere@0.1.36
-          node "$(npm root -g)/putitoutthere/dist/cli.js" publish ${{ inputs.dry_run && '--dry-run' || '' }}
+      - run: npx -y putitoutthere@0.1.37 publish ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
           # NODE_AUTH_TOKEN (not NPM_TOKEN) matches the .npmrc template that
           # actions/setup-node writes when registry-url is set. putitoutthere's
