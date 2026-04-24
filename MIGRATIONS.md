@@ -79,6 +79,53 @@ For a schema-declared file field where the file is missing, you should still see
 
 ---
 
+## Unreleased — compiled prompt cleanup and enum auto-format
+
+### (a) Summary
+The compiled `prompt.jinja` previously contained two cosmetic-but-distracting artifacts: a `..` double-period when `output.desc` ended in `.`, and two `Inputs:` headers (one inline in the instructions block, one as the template's slot block) that read like duplicate sections. Both are fixed: `_build_instructions` now joins parts with `\n\n` and the inline section is titled `Field descriptions:`. Additionally, when `output.type == "enum"`, the compiler auto-appends `Respond with exactly one of: <values>.` so callers no longer have to stuff format hints into `output.desc` themselves. Affected: anyone consuming the compiled `prompt.jinja` artifact downstream — the rendered output text changes shape (no API or parameter changes).
+
+### (b) Required changes
+
+| Area | Before | After |
+| ---- | ------ | ----- |
+| Compiled instructions inline section | `Inputs: \`x\`: …; \`y\`: …` | `Field descriptions: \`x\`: …; \`y\`: …` |
+| Joiner between instruction parts | `". "` (collides with trailing `.`) | `"\n\n"` |
+| Enum format hint | Caller stuffed it into `output.desc` manually | Compiler emits `Respond with exactly one of: <values>.` automatically |
+| Snapshot / golden-file tests on `prompt.jinja` | Match the old text | Re-record after `coax …` |
+
+If you maintain golden-file tests asserting the exact contents of compiled `prompt.jinja`, regenerate them via `coax <labels> --out <prompts>` — the only changes are in the static instruction text, the variable slots (`{{ field }}`) are unchanged.
+
+If your `output.desc` already ends in a sentence like `Respond with one of: ...` for an enum output, you can drop that line — the compiler now emits it. Leaving it in is harmless but produces a slight duplication.
+
+### (c) Deprecations removed
+None.
+
+### (d) Behavior changes without code changes
+- **Compiled `prompt.jinja` text is reformatted.** No changes to inputs, no changes to the output schema, no changes to the runtime behavior of `CoaxedPrompt(...)`. Snapshot/golden-file tests that pin the exact instruction text need to be re-recorded.
+- **Enum outputs surface their allowed values automatically.** Models receive `Respond with exactly one of: <comma-separated-values>.` as part of the instructions even when `output.desc` doesn't mention them. Compliance with the enum constraint should improve in practice.
+
+### (e) Verification
+
+```bash
+coax labels/your-task --out prompts/your-task --optimizer none
+grep -c "Inputs:" prompts/your-task/prompt.jinja
+# Expected: 1 (the template's slot block)
+grep -c "Field descriptions:" prompts/your-task/prompt.jinja
+# Expected: 1 (the schema-derived inline block)
+grep -c "\.\." prompts/your-task/prompt.jinja
+# Expected: 0 (no double-periods)
+```
+
+For an enum output, additionally:
+
+```bash
+grep "Respond with exactly one of:" prompts/your-task/prompt.jinja
+# Expected: a single line listing the enum values, e.g.
+# Respond with exactly one of: true, false.
+```
+
+---
+
 ## 0.3.x — public API replaced
 
 ### (a) Summary
