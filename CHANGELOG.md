@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### Changed
+- **Release pipeline: upgraded to `putitoutthere@0.1.37`.** Dropped the hand-rolled entry-point workarounds now that upstream split the CLI entry into `dist/cli-bin.js` (the GHA bundle + `npm i -g`/`npx` symlink bugs we worked around are both fixed upstream). Bumped the plan + PR dry-run jobs from Node 20 → 24 to clear the deprecation warning. Set `SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COAXER` on the sdist build step so `hatch-vcs` honors putitoutthere's planned version instead of deriving a `0.2.X.devN` suffix from the pre-tag git history.
+- **Release config: `putitoutthere.toml` `paths` now includes `CHANGELOG.md`.** Changelog-only edits (and notes landing alongside substantive changes) now naturally trigger a patch release instead of silently being skipped by cascade detection.
 - **Breaking: CLI renamed to `coax`.** Replaces `coaxer distill`; the labels folder is now the top-level positional argument (`coax <labels> --out <prompts>`). No shim — the `coaxer` console script is gone.
 - **Breaking: `CoaxPrompt` renamed to `CoaxedPrompt`.** Import is now `from coaxer import CoaxedPrompt`.
 - **Release pipeline: swapped to [putitoutthere](https://github.com/thekevinscott/put-it-out-there).** Releases are now driven by a `release: <patch|minor|major|skip>` trailer on the merge commit (see `putitoutthere/AGENTS.md`). The cron-based daily patch-bump workflow and manual minor-release dispatch have been removed; a single `release.yml` handles plan/build/publish on push-to-main, with `putitoutthere-check.yml` running a PR dry-run.

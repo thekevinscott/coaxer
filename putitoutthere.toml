@@ -8,7 +8,7 @@ version = 1
 name = "coaxer"
 kind = "pypi"
 path = "."
-paths = ["coaxer/**", "pyproject.toml"]
+paths = ["coaxer/**", "pyproject.toml", "CHANGELOG.md"]
 build = "hatch"
 # Pre-putitoutthere releases used unprefixed `v{version}` tags (latest: v0.2.12).
 # Override the default `{name}-v{version}` so the planner keeps bumping from
