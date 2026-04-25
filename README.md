@@ -16,8 +16,6 @@ Labels are the source of truth. The prompt is a build artifact.
 uv add coaxer
 ```
 
-Optional caching extra: `uv add "coaxer[cache]"`.
-
 ## Quick start
 
 ```bash
@@ -36,19 +34,6 @@ filled = p(readme=new_readme, stars=1200)
 Label folder is one directory per record; `record.json` plus sibling files for large text or binary inputs. `coax` compiles the folder into `prompt.jinja` + `meta.json` (+ `dspy.json` when `--optimizer gepa`) + `history.jsonl`. Default optimizer is `none` (schema-derived, no network).
 
 Full walkthrough: [`docs/guide/getting-started.md`](docs/guide/getting-started.md).
-
-## Caching
-
-Pass a [cachetta](https://github.com/thekevinscott/cachetta) instance to `AgentLM` (or `OpenAILM`) to file-back compile-time LM responses:
-
-```python
-from cachetta import Cachetta
-from coaxer import AgentLM
-
-lm = AgentLM(cache=Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d"))
-```
-
-Details: [`docs/guide/caching.md`](docs/guide/caching.md).
 
 ## CoaxedPrompt
 

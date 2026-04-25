@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Removed
+- **All caching documentation.** Dropped the `## Caching` README section, deleted `docs/guide/caching.md`, removed the cache parameter row + cachetta example from `docs/api/agent-lm.md`, removed the `Caching` section and the `cache=` line from `docs/llms-full.md`, and removed the `Caching` nav entry from `mkdocs.yml`. Caching the compile-time LM is a deployment concern; downstream consumers can wrap `AgentLM`/`OpenAILM` themselves. Code-side removal of the `cache=` kwarg and the `[cache]` extra is tracked in #40.
+
 ### Added
 - **`notes/environments/{agents,remote}.md` codify per-environment agent workflow.** `agents.md` documents how to detect a remote / managed-agents session via the `CLAUDE_CODE_REMOTE` env var (and `CLAUDE_CODE_REMOTE_SESSION_ID`); `remote.md` is the playbook for those sessions: every unit of work needs a GitHub issue, ends with a PR that auto-closes the issue (`Closes #N`), and the agent must drive CI to green and confirm the PR is mergeable before handing back.
 - **Three-level documentation: README, `docs/`, docs site.** README now mirrors the `docs/` folder structure as `##` sections with relative links into `docs/`, while the docs site renders `docs/` 1:1. Each page in `docs/` (and `MIGRATIONS.md`) now carries an `_Online: <url>_` line so an agent or human reading the file offline can find the hosted version. Reasoning: agents don't browse the docs site, so the package itself needs to carry the same structure.
