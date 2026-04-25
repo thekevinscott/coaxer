@@ -31,6 +31,54 @@ skipped a step).
 
 ---
 
+## Unreleased — sibling-file resolution no longer implies file on slash
+
+### (a) Summary
+`_resolve_value` previously raised `FileNotFoundError` for any input whose value contained `/` (or ended in `.md` / `.txt` / `.json` / `.png` / `.jpg` / `.pdf`), assuming it was a sibling-file path. That broke legitimate scalar inputs — GitHub `owner/name`, dates formatted `YYYY/MM/DD`, URLs as strings, etc. Resolution is now driven by `_schema.json`: a field is treated as file-backed when it declares `"type": "file"` or `"backing": "file"`, falling back to implicit resolution only when the value is a plain filename that exists on disk. Affected: any label folder whose schema has scalar inputs that may legitimately contain `/`.
+
+### (b) Required changes
+
+| Area | Before | After |
+| ---- | ------ | ----- |
+| Scalar input with `/` | Stored in a sibling `.txt` file because `"x": "foo/bar"` raised | `"x": "foo/bar"` works as-is |
+| Explicit file-backed input | `"x": "x.md"` (relied on extension heuristic) | Either keep the existing form (still works when `x.md` exists on disk) **or** add `"backing": "file"` (or `"type": "file"`) to the field's `_schema.json` entry to opt in unambiguously |
+
+Example schema with the new opt-in:
+
+```json
+{
+  "inputs": {
+    "readme": {"type": "str", "backing": "file"},
+    "repo_name": {"type": "str"}
+  },
+  "output": {"type": "enum", "values": ["true", "false"]}
+}
+```
+
+### (c) Deprecations removed
+None — this is a behavior fix, not a deprecation removal.
+
+### (d) Behavior changes without code changes
+- **`/` in a scalar input value is no longer treated as a path indicator.** Previously raised `FileNotFoundError`; now passes through as a string. If you were relying on the error to catch typos in file paths, mark the field with `"backing": "file"` (or `"type": "file"`) in `_schema.json` to keep that strictness.
+- **Extension-based file detection is gone.** Values ending in `.md` / `.txt` / `.json` / `.png` / `.jpg` / `.pdf` are no longer auto-treated as file paths unless the named file actually exists on disk in the record directory or the schema marks the field as file-backed.
+
+### (e) Verification
+For a label folder where an input genuinely holds slashes:
+
+```bash
+coax labels/my-task --out prompts/my-task --optimizer none
+```
+
+Should compile cleanly. Before the fix this would print:
+
+```
+FileNotFoundError: Sibling file not found: labels/my-task/0001/expo/skills
+```
+
+For a schema-declared file field where the file is missing, you should still see a `FileNotFoundError` mentioning the expected path — the strict mode is now opt-in via schema rather than guessed from the value.
+
+---
+
 ## 0.3.x — public API replaced
 
 ### (a) Summary
