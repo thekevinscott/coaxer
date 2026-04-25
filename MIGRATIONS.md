@@ -31,6 +31,59 @@ skipped a step).
 
 ---
 
+## Unreleased — caching removed from `AgentLM` / `OpenAILM`
+
+### (a) Summary
+Caching the compile-time LM is a deployment concern, not coaxer's. The `cache=` constructor kwarg on `AgentLM` was a duck-typed escape hatch (anything exposing `.wrap(fn) -> fn` worked), but its presence pulled `cachetta` into the project as an installable extra, a dev dep, integration tests, and a docstring section. The `cache=` kwarg, the `[cache]` extra (`coaxer[cache]`), and every `cachetta` reference in the package and tests are gone. Affected: anyone constructing `AgentLM(cache=...)` or installing `coaxer[cache]`. If you still want response caching, wrap the LM yourself — `cachetta` works with any callable that takes a prompt string.
+
+### (b) Required changes
+
+| Area | Before | After |
+| ---- | ------ | ----- |
+| Install extra | `uv add 'coaxer[cache]'` | `uv add coaxer cachetta` (install `cachetta` directly if you want it) |
+| Construct LM with cache | `lm = AgentLM(cache=Cachetta(path=...))` | `lm = AgentLM()` then wrap externally (see snippet below) |
+| `copy()` propagating cache | `lm.copy().cache is lm.cache` | No-op — wrap the copy yourself |
+
+External-wrap snippet for consumers who still want disk-backed caching:
+
+```python
+from cachetta import Cachetta
+from coaxer import AgentLM
+
+lm = AgentLM()
+cache = Cachetta(path=lambda prompt, **_: f"cache/{hash(prompt)}.pkl")
+cached_forward = cache.wrap(lambda prompt, **kw: lm.forward(prompt=prompt, **kw))
+
+# Use `cached_forward(prompt="...")` instead of `lm.forward(...)`.
+# For DSPy integration, subclass AgentLM and override forward/aforward to
+# delegate through the wrapped function.
+```
+
+### (c) Deprecations removed
+- `AgentLM(cache=...)` constructor kwarg.
+- `AgentLM.cache` and `AgentLM._cached_query` attributes.
+- `coaxer[cache]` installable extra (the `cachetta>=0.6.0` optional dep).
+- `cachetta` as a `dev` dependency (it was only there to back the integration tests, which are also gone).
+
+### (d) Behavior changes without code changes
+None. If you weren't passing `cache=` and weren't installing `coaxer[cache]`, nothing changes.
+
+### (e) Verification
+
+```bash
+python -c "from coaxer import AgentLM; AgentLM(cache=None)"
+```
+
+Should raise `TypeError: AgentLM.__init__() got an unexpected keyword argument 'cache'`. If it succeeds silently, you're still on the old version (the kwarg used to be accepted as `cache: Any = None`).
+
+```bash
+pip show cachetta 2>/dev/null || echo "not installed"
+```
+
+`cachetta` is no longer pulled in transitively by `coaxer` — install it explicitly if you wrap the LM yourself.
+
+---
+
 ## Unreleased — sibling-file resolution no longer implies file on slash
 
 ### (a) Summary

@@ -11,9 +11,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-cache = [
-    "cachetta>=0.6.0",
-]
 docs = [
     "mkdocs-material",
     "mkdocstrings[python]",
@@ -28,7 +25,6 @@ dev = [
     "pytest-watcher>=0.4",
     "pre-commit>=4.0",
     "ty>=0.0.1a7",
-    "cachetta>=0.6.0",
 ]
 
 [project.scripts]

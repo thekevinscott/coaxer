@@ -27,14 +27,6 @@ class AgentLM(BaseLM):
     The model identifier (default "claude-agent-sdk") is for DSPy's internal
     tracking only -- the actual model is determined by the Claude Code CLI.
 
-    Caching: pass a Cachetta instance to persist responses across runs.
-    Cachetta wraps the query function as a decorator, so the cache key is
-    derived from the prompt argument automatically. Any change to the prompt
-    invalidates the cache::
-
-        from cachetta import Cachetta
-        lm = AgentLM(cache=Cachetta(path=lambda prompt: f"cache/{prompt}.pkl"))
-
     Per-call kwargs override constructor kwargs (shallow merge).
     """
 
@@ -43,21 +35,13 @@ class AgentLM(BaseLM):
         model: str = "claude-agent-sdk",
         model_type: str = "chat",
         max_tokens: int = 4096,
-        cache: Any = None,
         **kwargs,
     ):
         self.model = model
         self.model_type = model_type
         self.max_tokens = max_tokens
-        self.cache = cache
         self.kwargs = kwargs
         self.history: list[dict] = []
-
-        # If cache provided, wrap the query function with cachetta
-        if cache is not None:
-            self._cached_query = cache.wrap(query_assistant_text)
-        else:
-            self._cached_query = None
 
     def forward(
         self,
@@ -73,8 +57,7 @@ class AgentLM(BaseLM):
         """
         user_prompt, merged_opts = self._prepare_call(prompt, messages, kwargs)
 
-        query_fn = self._cached_query or query_assistant_text
-        response_text = run_sync(query_fn(user_prompt, **merged_opts))
+        response_text = run_sync(query_assistant_text(user_prompt, **merged_opts))
 
         return self._build_response(user_prompt, response_text, kwargs)
 
@@ -87,8 +70,7 @@ class AgentLM(BaseLM):
         """Async forward pass. Calls the SDK directly without threading."""
         user_prompt, merged_opts = self._prepare_call(prompt, messages, kwargs)
 
-        query_fn = self._cached_query or query_assistant_text
-        response_text = await query_fn(user_prompt, **merged_opts)
+        response_text = await query_assistant_text(user_prompt, **merged_opts)
 
         return self._build_response(user_prompt, response_text, kwargs)
 
@@ -133,7 +115,6 @@ class AgentLM(BaseLM):
             model=self.model,
             model_type=self.model_type,
             max_tokens=self.max_tokens,
-            cache=self.cache,
             **new_kwargs,
         )
 

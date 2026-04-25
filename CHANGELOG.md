@@ -29,6 +29,7 @@
 - `pyproject.toml`: added `jinja2>=3.0`; dropped `textual>=3.0` and the `curtaincall` dev dep; bumped `dspy>=3.0` (for GEPA).
 
 ### Removed
+- **Breaking: caching removed from `AgentLM` (drop `cache=` kwarg, `[cache]` extra, all cachetta references).** Caching the compile-time LM is a deployment concern, not coaxer's; the duck-typed `cache=` kwarg dragged `cachetta` into the package as an installable extra, a dev dep, integration tests, and a docstring section, and that's not a stance the library should ship. Downstream consumers who still want response caching should wrap `AgentLM` / `OpenAILM` externally — `cachetta`'s `.wrap(fn) -> fn` decorator works with any callable. (#40) See [MIGRATIONS.md](MIGRATIONS.md#unreleased--caching-removed-from-agentlm--openailm) for upgrade instructions.
 - **`karat` shim package.** The re-export shim introduced when the package was renamed to `coaxer` has been removed. Migration: `from karat import X` → `from coaxer import X`.
 - **Labeling TUI** (`coaxer/tui/`, `coaxer label` CLI, `docs/guide/labeling-tui.md`). Labeling happens in an editor or via a Claude Code agent writing the folder directly.
 - **`/optimize` skill** (`coaxer install` CLI, `coaxer/skills/`, `docs/guide/optimize-skill.md`). The skill's workflow is now `coax`.
