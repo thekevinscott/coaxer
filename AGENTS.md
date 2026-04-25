@@ -38,7 +38,7 @@ Before considering a PR complete:
 3. **No merge conflicts** -- rebase on main if needed
 4. **CHANGELOG.md updated** -- **every PR** adds at least one bullet under `## Unreleased`. No exceptions: bug fixes, refactors, CI, docs, internal-only. We don't follow semver strictly enough to rely on version numbers as the signal, so the audit trail lives in the changelog. Enforced by the `changelog` CI job.
    - **Bypass:** add the trailer `skip-changelog: true` to the PR's merge-commit body (or to every commit in a rebase-merge branch) to skip the check. Use sparingly — dependabot bumps, trivial typo fixes inside docs where the CHANGELOG itself is the touched file, etc. If in doubt, add a line to the changelog.
-5. **MIGRATIONS.md updated** -- if the PR changes any public-facing surface (see *Scope* below), add a versioned entry to `MIGRATIONS.md` using the template in the next section.
+5. **MIGRATIONS.md updated** -- if the PR changes any public-facing surface (see *Scope* below), add a versioned entry to `MIGRATIONS.md` using the template in the next section. Enforced by the `migrations` CI job whenever the `release:` trailer is `minor` or `major`. Bypass with a `skip-migration: true` trailer (rare — only when the version bump genuinely has no consumer surface).
 
 ### Changelog format
 
@@ -139,6 +139,7 @@ uv run just ci               # Full local CI (lint + format + typecheck + tests)
 
 - `release: <patch|minor|major|skip>` -- determines the release bump on merge. See `putitoutthere/AGENTS.md` for scoping and semantics.
 - `skip-changelog: true` -- bypass the `changelog` CI job for this PR. Use rarely.
+- `skip-migration: true` -- bypass the `migrations` CI job for this PR. Only valid when the `release:` trailer is `minor` or `major` and the change genuinely has no consumer surface (e.g. an internal refactor that warrants a feature bump because of a new optional API but doesn't break existing callers). Use sparingly.
 
 ## Project Structure
 

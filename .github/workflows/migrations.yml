@@ -1,0 +1,53 @@
+name: Migrations
+
+on:
+  pull_request:
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    env:
+      BASE_REF: ${{ github.base_ref }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Require MIGRATIONS.md update on minor/major releases
+        run: |
+          git fetch origin "$BASE_REF" --depth=1
+
+          # Trailer sources: every commit message in the PR range, plus the PR body
+          # (so "Squash and merge" works — body becomes the squashed commit body).
+          trailers="$({ git log --format=%B "origin/$BASE_REF..HEAD"; printf '%s\n' "$PR_BODY"; } 2>/dev/null)"
+
+          if printf '%s\n' "$trailers" | grep -qiE '^[[:space:]]*skip-migration:[[:space:]]*true[[:space:]]*$'; then
+            echo "skip-migration: true trailer present; bypassing MIGRATIONS.md requirement."
+            exit 0
+          fi
+
+          # `release: minor [pkg-a, pkg-b]` is also valid — strip the optional bracketed list
+          # before extracting the version-bump keyword.
+          release_type=$(printf '%s\n' "$trailers" \
+            | grep -iE '^[[:space:]]*release:[[:space:]]*(patch|minor|major|skip)' \
+            | head -n1 \
+            | sed -E 's/^[[:space:]]*[Rr]elease:[[:space:]]*([A-Za-z]+).*/\1/' \
+            | tr '[:upper:]' '[:lower:]')
+
+          if [ -z "$release_type" ]; then
+            echo "No release: trailer found — MIGRATIONS.md not required."
+            exit 0
+          fi
+
+          if [ "$release_type" = "patch" ] || [ "$release_type" = "skip" ]; then
+            echo "release: $release_type — MIGRATIONS.md not required."
+            exit 0
+          fi
+
+          # release: minor or major — MIGRATIONS.md must be touched.
+          if git diff --name-only "origin/$BASE_REF...HEAD" | grep -qx MIGRATIONS.md; then
+            echo "release: $release_type detected and MIGRATIONS.md updated"
+          else
+            echo "::error::release: $release_type detected but MIGRATIONS.md was not modified. Add a versioned entry using the 5-section template (see AGENTS.md), or add 'skip-migration: true' as a trailer on any commit or in the PR body to bypass this check (rare — only for breaking-internal changes that genuinely have no consumer surface)."
+            exit 1
+          fi
