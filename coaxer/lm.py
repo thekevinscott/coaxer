@@ -37,6 +37,15 @@ class AgentLM(BaseLM):
         max_tokens: int = 4096,
         **kwargs,
     ):
+        # Claude Code refuses to launch when CLAUDECODE is inherited from the
+        # parent, so every AgentLM call from inside a Claude Code session
+        # (e.g. `coax --optimizer gepa` running each rollout as a nested
+        # SDK query) would fail. Default env to clear CLAUDECODE; callers
+        # who really need to inherit it can pass env={"CLAUDECODE": "1"}.
+        env = dict(kwargs.get("env") or {})
+        env.setdefault("CLAUDECODE", "")
+        kwargs["env"] = env
+
         self.model = model
         self.model_type = model_type
         self.max_tokens = max_tokens
