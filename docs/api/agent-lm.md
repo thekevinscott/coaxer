@@ -1,5 +1,7 @@
 # AgentLM
 
+_Online: <https://thekevinscott.github.io/coaxer/api/agent-lm/>_
+
 ::: coaxer.AgentLM
     options:
       show_source: false

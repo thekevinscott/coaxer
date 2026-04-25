@@ -1,5 +1,7 @@
 # Migrations
 
+_Online: <https://thekevinscott.github.io/coaxer/migrations/>_
+
 This file is the source of truth for downstream-consumer upgrade instructions
 when coaxer ships a breaking change or a notable behavior-only change. See
 [CHANGELOG.md](CHANGELOG.md) for the full history of every release — this

@@ -1,5 +1,7 @@
 # coaxer -- Complete Reference (LLM-friendly)
 
+_Online: <https://thekevinscott.github.io/coaxer/llms-full/>_
+
 Full coaxer documentation on a single page, designed for consumption by language models.
 
 ## What is coaxer?

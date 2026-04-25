@@ -1,5 +1,7 @@
 # coaxer
 
+_Online: <https://thekevinscott.github.io/coaxer/>_
+
 Label examples. Derive the prompt. Consume it as a string.
 
 The prompt is a build artifact; your labeled examples are the source of truth. When the prompt drifts, add more examples and recompile.

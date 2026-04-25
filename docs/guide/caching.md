@@ -1,5 +1,7 @@
 # Caching
 
+_Online: <https://thekevinscott.github.io/coaxer/guide/caching/>_
+
 coaxer supports response caching via [cachetta](https://github.com/thekevinscott/cachetta), a file-backed cache decorator. This avoids redundant LLM calls when the same prompt is run multiple times.
 
 ## Install
