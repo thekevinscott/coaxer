@@ -34,6 +34,7 @@ def distill(
     out_dir: str | Path,
     *,
     lm: Any = None,
+    reflection_lm: Any = None,
     optimizer: str | None = None,
     output_name: str = "output",
 ) -> Path:
@@ -48,7 +49,14 @@ def distill(
     schema = load_schema(labels) or infer_schema(records)
     signature = build_signature(schema, output_name=output_name)
 
-    program = _optimize(signature, records, output_name=output_name, lm=lm, optimizer=optimizer)
+    program = _optimize(
+        signature,
+        records,
+        output_name=output_name,
+        lm=lm,
+        reflection_lm=reflection_lm,
+        optimizer=optimizer,
+    )
 
     template = _render_template(signature, schema)
     (out / "prompt.jinja").write_text(template)
@@ -80,12 +88,19 @@ def _optimize(
     *,
     output_name: str,
     lm: Any,
+    reflection_lm: Any,
     optimizer: str | None,
 ) -> Any:
     if optimizer is None:
         return None
     if optimizer == "gepa":
-        return _run_gepa(signature, records, output_name=output_name, lm=lm)
+        return _run_gepa(
+            signature,
+            records,
+            output_name=output_name,
+            lm=lm,
+            reflection_lm=reflection_lm,
+        )
     raise ValueError(f"Unknown optimizer: {optimizer!r}")
 
 
@@ -95,11 +110,17 @@ def _run_gepa(
     *,
     output_name: str,
     lm: Any,
+    reflection_lm: Any,
 ) -> Any:
     import dspy
 
     if lm is None:
         raise ValueError("GEPA requires an `lm` argument (AgentLM, OpenAILM, or any dspy.LM)")
+
+    # DSPy 3's dspy.GEPA asserts reflection_lm is not None at construction time.
+    # Default to the program's main lm so `coax --optimizer gepa` works zero-config.
+    if reflection_lm is None:
+        reflection_lm = lm
 
     program = dspy.Predict(signature)
     trainset = [
@@ -116,7 +137,11 @@ def _run_gepa(
         return 1.0 if getattr(pred, output_name, None) == getattr(gold, output_name) else 0.0
 
     with dspy.context(lm=lm):
-        optimizer = dspy.GEPA(metric=metric, auto="light")  # type: ignore[arg-type]
+        optimizer = dspy.GEPA(
+            metric=metric,
+            auto="light",
+            reflection_lm=reflection_lm,
+        )
         return optimizer.compile(program, trainset=trainset)
 
 
