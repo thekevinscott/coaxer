@@ -40,12 +40,20 @@ def _annotation(field: Field) -> Any:
 
 
 def _build_instructions(schema: Schema, output_name: str) -> str:
-    parts = []
+    # Join parts with blank lines so trailing periods in `output.desc`
+    # don't collide with the next section (avoids the `information.. Inputs:`
+    # artifact). The inline field-description block is titled
+    # `Field descriptions:` to disambiguate from the template's own
+    # `Inputs:` heading (which carries the jinja slot values).
+    parts: list[str] = []
     if schema.output.desc:
         parts.append(schema.output.desc)
     input_descs = [f"`{n}`: {f.desc}" for n, f in schema.inputs.items() if f.desc]
     if input_descs:
-        parts.append("Inputs: " + "; ".join(input_descs))
+        parts.append("Field descriptions: " + "; ".join(input_descs))
+    if schema.output.type == "enum" and schema.output.values:
+        allowed = ", ".join(schema.output.values)
+        parts.append(f"Respond with exactly one of: {allowed}.")
     if not parts:
         parts.append(f"Predict {output_name} from the inputs")
-    return ". ".join(parts)
+    return "\n\n".join(parts)

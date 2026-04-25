@@ -62,3 +62,30 @@ def test_unknown_optimizer_raises(tmp_path: Path):
     out = tmp_path / "prompt_out"
     with pytest.raises(ValueError, match="optimizer"):
         distill(FIXTURE, out, optimizer="nonesuch")
+
+
+def test_rendered_prompt_has_no_double_period(tmp_path: Path):
+    out = tmp_path / "prompt_out"
+    distill(FIXTURE, out, optimizer=None)
+    template = (out / "prompt.jinja").read_text()
+    assert ".." not in template
+
+
+def test_rendered_prompt_has_single_inputs_block(tmp_path: Path):
+    # The template owns the `Inputs:` heading; instructions should use
+    # `Field descriptions:` instead so there's exactly one of each.
+    out = tmp_path / "prompt_out"
+    distill(FIXTURE, out, optimizer=None)
+    template = (out / "prompt.jinja").read_text()
+    assert template.count("Inputs:") == 1
+    assert template.count("Field descriptions:") == 1
+
+
+def test_rendered_prompt_enum_surfaces_allowed_values(tmp_path: Path):
+    # Demo fixture's output is an enum of ["true", "false"].
+    out = tmp_path / "prompt_out"
+    distill(FIXTURE, out, optimizer=None)
+    template = (out / "prompt.jinja").read_text()
+    assert "Respond with exactly one of:" in template
+    assert "true" in template
+    assert "false" in template
