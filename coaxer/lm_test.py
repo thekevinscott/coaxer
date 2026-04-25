@@ -38,6 +38,21 @@ def describe_AgentLM():
             assert lm.max_tokens == 2048
             assert lm.kwargs["custom_arg"] == "value"
 
+        def it_defaults_env_to_clear_claudecode():
+            """Default env strips CLAUDECODE so nested-session launches work."""
+            lm = AgentLM()
+            assert lm.kwargs["env"] == {"CLAUDECODE": ""}
+
+        def it_merges_default_claudecode_into_caller_env():
+            """Caller-supplied env still gets CLAUDECODE="" added."""
+            lm = AgentLM(env={"FOO": "bar"})
+            assert lm.kwargs["env"] == {"FOO": "bar", "CLAUDECODE": ""}
+
+        def it_respects_explicit_claudecode_override():
+            """Caller wins if they set CLAUDECODE explicitly."""
+            lm = AgentLM(env={"CLAUDECODE": "1"})
+            assert lm.kwargs["env"] == {"CLAUDECODE": "1"}
+
     def describe_forward():
         def it_calls_query_assistant_text(mock_run_sync):
             mock_run_sync.return_value = "Hello world"
