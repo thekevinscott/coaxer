@@ -10,7 +10,6 @@ wheels/
 .venv
 
 # Local/dev files
-notes/
 tmp/
 .claude/settings.local.json
 .claude/worktrees/
