@@ -14,6 +14,7 @@ from __future__ import annotations
 import inspect
 import json
 from pathlib import Path
+from typing import ClassVar
 from unittest.mock import patch
 
 import pytest
@@ -59,6 +60,27 @@ class _MetricCapturingOptimizer:
     def __init__(self, *, metric: object, **_: object) -> None:
         inspect.signature(metric).bind(None, None, None, None, None)
         _MetricCapturingOptimizer.captured_metric = metric
+
+    def compile(self, program, *, trainset):  # noqa: ARG002
+        return _StubProgram()
+
+
+class _KwargsCapturingOptimizer:
+    """Captures every kwarg passed to ``dspy.GEPA.__init__``.
+
+    Also enforces DSPy 3's reflection-LM assertion so a regression where
+    ``_run_gepa`` stops passing ``reflection_lm`` surfaces here too.
+    """
+
+    captured_kwargs: ClassVar[dict] = {}
+
+    def __init__(self, **kwargs: object) -> None:
+        # Mirror DSPy 3's assertion so we fail loudly if reflection_lm goes missing.
+        assert (
+            kwargs.get("reflection_lm") is not None
+            or kwargs.get("instruction_proposer") is not None
+        ), "GEPA requires reflection_lm or instruction_proposer"
+        _KwargsCapturingOptimizer.captured_kwargs = dict(kwargs)
 
     def compile(self, program, *, trainset):  # noqa: ARG002
         return _StubProgram()
@@ -130,3 +152,46 @@ def test_distill_gepa_metric_accepts_dspy3_five_arg_signature(tmp_path: Path) ->
 
     assert metric(_Obj(output="true"), _Obj(output="true")) == 1.0
     assert metric(_Obj(output="true"), _Obj(output="false")) == 0.0
+
+
+def test_distill_gepa_defaults_reflection_lm_to_main_lm(tmp_path: Path) -> None:
+    """Regression for #43: ``_run_gepa`` must pass ``reflection_lm`` to ``dspy.GEPA``.
+
+    DSPy 3's ``dspy.GEPA.__init__`` asserts ``reflection_lm is not None`` when
+    no custom ``instruction_proposer`` is set. Without a default, every
+    ``coax --optimizer gepa`` invocation crashes before optimization starts.
+    The compiler now defaults ``reflection_lm`` to the program's main ``lm`` so
+    the zero-config flow works.
+    """
+    out = tmp_path / "out"
+    _KwargsCapturingOptimizer.captured_kwargs = {}
+
+    with (
+        patch("coaxer.lm.run_sync", return_value="true"),
+        patch("dspy.GEPA", _KwargsCapturingOptimizer),
+    ):
+        lm = AgentLM()
+        distill(FIXTURE, out, lm=lm, optimizer="gepa")
+
+    captured = _KwargsCapturingOptimizer.captured_kwargs
+    assert captured.get("reflection_lm") is lm, (
+        "reflection_lm should default to the main lm when not explicitly provided"
+    )
+
+
+def test_distill_gepa_accepts_explicit_reflection_lm_override(tmp_path: Path) -> None:
+    """An explicit ``reflection_lm`` overrides the main-lm default."""
+    out = tmp_path / "out"
+    _KwargsCapturingOptimizer.captured_kwargs = {}
+
+    with (
+        patch("coaxer.lm.run_sync", return_value="true"),
+        patch("dspy.GEPA", _KwargsCapturingOptimizer),
+    ):
+        main_lm = AgentLM()
+        reflection_lm = AgentLM()
+        distill(FIXTURE, out, lm=main_lm, reflection_lm=reflection_lm, optimizer="gepa")
+
+    captured = _KwargsCapturingOptimizer.captured_kwargs
+    assert captured.get("reflection_lm") is reflection_lm
+    assert captured.get("reflection_lm") is not main_lm
