@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- **`notes/environments/{agents,remote}.md` codify per-environment agent workflow.** `agents.md` documents how to detect a remote / managed-agents session via the `CLAUDE_CODE_REMOTE` env var (and `CLAUDE_CODE_REMOTE_SESSION_ID`); `remote.md` is the playbook for those sessions: every unit of work needs a GitHub issue, ends with a PR that auto-closes the issue (`Closes #N`), and the agent must drive CI to green and confirm the PR is mergeable before handing back.
 - **`AGENTS.md` at the repo root consolidates contributor instructions.** Moved everything that was previously in `.claude/CLAUDE.md` (PR workflow, testing, code style, commit conventions, project layout) into the agent-agnostic `AGENTS.md` convention so tools beyond Claude Code can pick it up. Root `CLAUDE.md` now just `@`-includes `AGENTS.md` and `putitoutthere/AGENTS.md`.
 - **Changelog / migration policy codified in `AGENTS.md`.** Every PR must add a bullet under `## Unreleased`; public-facing changes also require a `MIGRATIONS.md` entry using the 5-section template (summary, required changes, deprecations removed, behavior changes, verification). Opt out of the changelog check with a `skip-changelog: true` commit trailer.
 - **`MIGRATIONS.md` is the canonical downstream-consumer upgrade guide.** Repo-root file with a 5-section per-version template (summary, required changes, deprecations removed, behavior changes, verification). Published on the docs site at `/migrations/` via `pymdownx.snippets` so there is a single source of truth.
