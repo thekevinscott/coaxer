@@ -38,7 +38,7 @@ Before considering a PR complete:
 3. **No merge conflicts** -- rebase on main if needed
 4. **CHANGELOG.md updated** -- **every PR** adds at least one bullet under `## Unreleased`. No exceptions: bug fixes, refactors, CI, docs, internal-only. We don't follow semver strictly enough to rely on version numbers as the signal, so the audit trail lives in the changelog. Enforced by the `changelog` CI job.
    - **Bypass:** add the trailer `skip-changelog: true` to the PR's merge-commit body (or to every commit in a rebase-merge branch) to skip the check. Use sparingly — dependabot bumps, trivial typo fixes inside docs where the CHANGELOG itself is the touched file, etc. If in doubt, add a line to the changelog.
-5. **MIGRATIONS.md updated** -- if the PR changes any public-facing surface (see *Scope* below), add a versioned entry to `MIGRATIONS.md` using the template in the next section. Enforced by the `migrations` CI job whenever the `release:` trailer is `minor` or `major`. Bypass with a `skip-migration: true` trailer (rare — only when the version bump genuinely has no consumer surface).
+5. **MIGRATIONS.md updated** -- **every PR** adds at least one entry under `## Unreleased`, parallel to the CHANGELOG entry. For PRs that touch a public-facing surface (see *Scope* below), use the full 5-section template. For PRs with no consumer-facing impact (CI tweaks, internal refactors, doc fixes), use the no-change shorthand: a single `No migration required.` line under a slugged `## Unreleased — <slug>` header. Enforced by the `migrations` CI job — the file must be touched on every PR. Bypass with a `skip-migration: true` trailer (rare — only for CHANGELOG-only follow-ups where even the shorthand is redundant).
 
 ### Changelog format
 
@@ -85,14 +85,24 @@ dry-run / non-destructive check.
 
 Mark the corresponding CHANGELOG bullet in `### Changed` / `### Removed` / `### Deprecated` with **Breaking:** when the migration is required for consumers to keep working.
 
-**Scope -- what counts as public-facing:**
+**No-change shorthand.** When the PR has no consumer-facing surface (CI tweaks, internal refactors, dependency bumps, doc fixes), the entry collapses to a single line — no 5-section template, no before/after table:
+
+```markdown
+## Unreleased — <short slug>
+
+No migration required.
+```
+
+This keeps `MIGRATIONS.md` mirrored 1:1 with `CHANGELOG.md` so reviewers can scan one file and trust nothing was silently smuggled past the migration check.
+
+**Scope -- what counts as public-facing (full template required):**
 - Anything exported from `coaxer/__init__.py`.
 - The `coax` CLI surface: flags, positional args, exit codes, stdout/stderr shape.
 - The label-folder layout: `_schema.json`, `record.json`, sibling-file conventions.
 - The compiled artifact layout: `prompt.jinja`, `meta.json`, `dspy.json`, `history.jsonl`.
 - The `AgentLM` / `OpenAILM` constructor kwargs and return shape.
 
-Changes to any of these require a `MIGRATIONS.md` entry even if the `release:` trailer is `patch`.
+Changes to any of these require the full 5-section template. Anything else takes the no-change shorthand.
 
 ## Testing (Red/Green TDD, Outside-In)
 

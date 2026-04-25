@@ -33,6 +33,49 @@ skipped a step).
 
 ---
 
+## Unreleased — `MIGRATIONS.md` is now a per-PR requirement
+
+No migration required.
+
+---
+
+## Unreleased — `AgentLM` defaults `env` to clear `CLAUDECODE`
+
+### (a) Summary
+Running `coax --optimizer gepa` (or any `AgentLM` call) from inside a Claude Code session previously failed every rollout with `Claude Code cannot be launched inside another Claude Code session.` because `AgentLM` inherited the parent's `CLAUDECODE` env var; the SDK and CLI refuse nested launches when that variable is set. `AgentLM.__init__` now seeds `kwargs["env"]` with `CLAUDECODE=""` via `setdefault`, so the zero-config nested-session flow works without `CLAUDECODE= coax …` wrappers. Affected: anyone constructing `AgentLM(env=...)` and inspecting the merged kwargs, or anyone explicitly setting `env` on the SDK call site downstream and relying on coaxer not to inject extra keys.
+
+### (b) Required changes
+
+| Area | Before | After |
+| ---- | ------ | ----- |
+| Nested-session workaround | `CLAUDECODE= coax --optimizer gepa <labels> --out <prompts>` | `coax --optimizer gepa <labels> --out <prompts>` (no wrapper) |
+| `AgentLM().kwargs["env"]` | `{}` | `{"CLAUDECODE": ""}` |
+| Caller-supplied env merge | `AgentLM(env={"FOO": "bar"}).kwargs["env"] == {"FOO": "bar"}` | `AgentLM(env={"FOO": "bar"}).kwargs["env"] == {"FOO": "bar", "CLAUDECODE": ""}` |
+| Explicit override | n/a — coaxer didn't set this key | `AgentLM(env={"CLAUDECODE": "1"})` preserves your value |
+
+### (c) Deprecations removed
+None.
+
+### (d) Behavior changes without code changes
+- **`AgentLM` always seeds `env` with `CLAUDECODE=""`.** If your downstream code asserts on the exact contents of `lm.kwargs["env"]`, update the expected dict to include the new key. Pass `env={"CLAUDECODE": "1"}` (or any non-empty value) at construction to opt out.
+- **Nested-session launches succeed by default.** Previously rolled-out wrappers (`CLAUDECODE= coax …`, `env={"CLAUDECODE": ""}` everywhere AgentLM is constructed) are now redundant and can be dropped — but leaving them in place is harmless.
+
+### (e) Verification
+
+```bash
+python -c "from coaxer import AgentLM; print(AgentLM().kwargs['env'])"
+```
+
+Should print `{'CLAUDECODE': ''}`. If it prints `{}`, you're still on a pre-fix version.
+
+```bash
+CLAUDECODE=1 python -c "from coaxer import AgentLM; print(AgentLM(env={'FOO': 'bar'}).kwargs['env'])"
+```
+
+Should print `{'FOO': 'bar', 'CLAUDECODE': ''}` regardless of the parent's `CLAUDECODE`.
+
+---
+
 ## Unreleased — caching removed from `AgentLM` / `OpenAILM`
 
 ### (a) Summary
