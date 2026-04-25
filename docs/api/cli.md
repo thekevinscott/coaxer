@@ -1,5 +1,7 @@
 # CLI
 
+_Online: <https://thekevinscott.github.io/coaxer/api/cli/>_
+
 Coaxer exposes a single command: `coax`.
 
 ## `coax`

@@ -1,5 +1,7 @@
 # OpenAILM
 
+_Online: <https://thekevinscott.github.io/coaxer/api/openai-lm/>_
+
 ::: coaxer.OpenAILM
     options:
       show_source: false

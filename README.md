@@ -2,11 +2,11 @@
 
 Label examples. Derive the prompt. Consume it as a string.
 
-[Documentation](https://thekevinscott.github.io/coaxer/)
+Full docs: <https://thekevinscott.github.io/coaxer/> · ship-with-package source in [`docs/`](docs/).
 
 ## Motivation
 
-Writing prompts by hand is slow, and the prose grows brittle as cases accumulate. Coaxer flips it: label examples of the behavior you want, derive the prompt from those labels -- when it drifts, add more labels instead of rewriting.
+Writing prompts by hand is slow, and the prose grows brittle as cases accumulate. Coaxer flips it: label examples of the behavior you want, derive the prompt from those labels — when it drifts, add more labels instead of rewriting.
 
 Labels are the source of truth. The prompt is a build artifact.
 
@@ -16,96 +16,64 @@ Labels are the source of truth. The prompt is a build artifact.
 uv add coaxer
 ```
 
-## Label
-
-One directory per record. `record.json` holds scalar fields; large text and binary inputs live as sibling files.
-
-```
-labels/repo-classification/
-  _schema.json              # optional: field descriptions + types + enums
-  0001/
-    record.json             # {id, inputs: {readme, stars, ...}, output}
-    readme.md               # large text referenced from record.json
-  0002/
-    ...
-```
-
-`_schema.json` is optional. Without it, field names and types are inferred from the records.
-
-```json
-{
-  "inputs": {
-    "readme": {"desc": "Project README markdown"},
-    "stars": {"desc": "GitHub star count", "type": "int"}
-  },
-  "output": {
-    "desc": "Curated collection vs organic project",
-    "type": "enum",
-    "values": ["true", "false"]
-  }
-}
-```
-
-## Distill
+## Quick start
 
 ```bash
 coax labels/repo-classification --out prompts/repo-classification
 ```
 
-Writes four files to the output folder:
-
-| File | Purpose |
-|---|---|
-| `prompt.jinja` | Human-readable Jinja template with `{{ field }}` slots. |
-| `meta.json` | Compile metadata: `compiled_at`, `example_count`, `label_hash`, schema. |
-| `dspy.json` | DSPy program state (only when `--optimizer gepa`). |
-| `history.jsonl` | Append-only compile log. |
-
-Optimizer is opt-in. `--optimizer gepa` runs DSPy 3's GEPA pass and requires an LLM credential. The default (`--optimizer none`) emits a schema-derived template and is reproducible without network.
-
-## Consume
-
 ```python
 from coaxer import CoaxedPrompt
 
-p = CoaxedPrompt("prompts/repo-classification", role="classifier")  # bind defaults
-filled = p(readme=new_readme, stars=1200)                         # render at call time
+p = CoaxedPrompt("prompts/repo-classification")
+filled = p(readme=new_readme, stars=1200)
 ```
 
-- `CoaxedPrompt(path, **bound)` — `str` subclass; `__new__` reads `prompt.jinja`.
-- `str(p)` — raw template.
-- `p(**vars)` — Jinja2 `StrictUndefined` render; missing variables raise.
-- Call-time variables override bound defaults.
+## Getting Started
 
-Because `CoaxedPrompt` is a `str`, it drops in anywhere a string is accepted (logging, OpenAI SDK `messages`, Anthropic SDK, DSPy signatures built externally, etc.).
+Label folder is one directory per record; `record.json` plus sibling files for large text or binary inputs. `coax` compiles the folder into `prompt.jinja` + `meta.json` (+ `dspy.json` when `--optimizer gepa`) + `history.jsonl`. Default optimizer is `none` (schema-derived, no network).
 
-## Compile LLMs
+Full walkthrough: [`docs/guide/getting-started.md`](docs/guide/getting-started.md).
 
-`AgentLM` routes compile calls through the Anthropic Agent SDK (Claude Code). `OpenAILM` hits any OpenAI-compatible endpoint (Ollama, vLLM, OpenAI).
+## CoaxedPrompt
+
+`CoaxedPrompt(path, **bound)` is a `str` subclass. `str(p)` is the raw Jinja template; `p(**vars)` renders it (Jinja2 `StrictUndefined` — missing vars raise). Bound defaults at construction; call-time vars override.
+
+Reference: [`docs/api/coaxed-prompt.md`](docs/api/coaxed-prompt.md).
+
+## CLI
+
+```bash
+coax <labels-dir> --out <prompts-dir> [--optimizer {none,gepa}] [--output-name NAME]
+```
+
+Reference: [`docs/api/cli.md`](docs/api/cli.md).
+
+## AgentLM
+
+DSPy `BaseLM` backed by the Claude Agent SDK. `**kwargs` forward to `ClaudeAgentOptions` (`tools`, `allowed_tools`, `max_turns`, …).
 
 ```python
-from coaxer import AgentLM, OpenAILM
+from coaxer import AgentLM
+lm = AgentLM(tools=[])
+```
 
-lm = AgentLM()                                # Claude via Agent SDK
-lm = OpenAILM(model="llama3")                 # Ollama
+Reference: [`docs/api/agent-lm.md`](docs/api/agent-lm.md).
+
+## OpenAILM
+
+DSPy `BaseLM` for any OpenAI-compatible chat endpoint (Ollama, vLLM, OpenAI, LM Studio, …).
+
+```python
+from coaxer import OpenAILM
 lm = OpenAILM(model="gpt-4o", base_url="https://api.openai.com/v1", api_key="sk-...")
 ```
 
-Both pass keyword arguments through to their underlying client.
+Reference: [`docs/api/openai-lm.md`](docs/api/openai-lm.md).
 
-## Caching
+## Migrations
 
-Pass a [cachetta](https://github.com/thekevinscott/cachetta) instance to file-back LM responses:
-
-```python
-from cachetta import Cachetta
-from coaxer import AgentLM
-
-cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
-lm = AgentLM(cache=cache)
-```
-
-Install with the cache extra: `uv add "coaxer[cache]"`.
+Downstream-consumer upgrade instructions for breaking changes live in [`MIGRATIONS.md`](MIGRATIONS.md) (also published at [`docs/migrations.md`](docs/migrations.md)). The full release log is in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Development
 

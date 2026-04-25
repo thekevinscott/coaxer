@@ -1,5 +1,7 @@
 # `CoaxedPrompt`
 
+_Online: <https://thekevinscott.github.io/coaxer/api/coaxed-prompt/>_
+
 A compiled prompt as a `str` subclass.
 
 ```python

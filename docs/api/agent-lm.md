@@ -1,5 +1,7 @@
 # AgentLM
 
+_Online: <https://thekevinscott.github.io/coaxer/api/agent-lm/>_
+
 ::: coaxer.AgentLM
     options:
       show_source: false
@@ -14,7 +16,6 @@
 | `model` | `str` | `"claude-agent-sdk"` | Model identifier for DSPy tracking. The actual model is determined by the Claude Code CLI. |
 | `model_type` | `str` | `"chat"` | DSPy model type. |
 | `max_tokens` | `int` | `4096` | Maximum tokens (forwarded to DSPy, not the SDK). |
-| `cache` | `Cachetta \| None` | `None` | Optional cachetta instance for response caching. |
 | `**kwargs` | | | All other kwargs forwarded to `ClaudeAgentOptions`. |
 
 ## Common ClaudeAgentOptions
@@ -59,9 +60,4 @@ dspy.configure(lm=lm)
 
 # Classification (no tools)
 lm = AgentLM(tools=[])
-
-# With caching
-from cachetta import Cachetta
-cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
-lm = AgentLM(cache=cache, tools=[])
 ```

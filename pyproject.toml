@@ -47,6 +47,22 @@ local_scheme = "no-local-version"
 [tool.hatch.build.targets.wheel]
 packages = ["coaxer"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"docs" = "coaxer/docs"
+"MIGRATIONS.md" = "coaxer/docs/MIGRATIONS.md"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/coaxer",
+    "/docs",
+    "/tests",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/MIGRATIONS.md",
+    "/justfile",
+    "/pyproject.toml",
+]
+
 
 [tool.ruff]
 target-version = "py314"

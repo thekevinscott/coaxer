@@ -1,5 +1,7 @@
 # coaxer -- Complete Reference (LLM-friendly)
 
+_Online: <https://thekevinscott.github.io/coaxer/llms-full/>_
+
 Full coaxer documentation on a single page, designed for consumption by language models.
 
 ## What is coaxer?
@@ -19,12 +21,6 @@ The prompt is a build artifact. Labeled examples are the source of truth.
 
 ```bash
 uv add coaxer
-```
-
-With caching:
-
-```bash
-uv add "coaxer[cache]"
 ```
 
 Requirements: Python >= 3.14, DSPy >= 3.0, Jinja2 >= 3.0. `AgentLM` additionally requires the Claude Code CLI installed and authenticated.
@@ -121,7 +117,6 @@ AgentLM(
     model: str = "claude-agent-sdk",
     model_type: str = "chat",
     max_tokens: int = 4096,
-    cache: Cachetta | None = None,
     **kwargs,                # forwarded to ClaudeAgentOptions
 )
 ```
@@ -163,15 +158,3 @@ print(p(
     stars=521,
 ))
 ```
-
-## Caching
-
-```python
-from cachetta import Cachetta
-from coaxer import AgentLM
-
-cache = Cachetta(path=lambda prompt, **kw: f"cache/{prompt}.pkl", duration="7d")
-lm = AgentLM(cache=cache, tools=[])
-```
-
-Install: `uv add "coaxer[cache]"`.
