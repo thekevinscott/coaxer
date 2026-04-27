@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Fixed
+- **`release.yml` reusable-workflow ref: `@v1` → `@v0`.** putitoutthere's floating major tag is `v0` (its README example showing `@v1` was aspirational); on every push to main since #48, the workflow file failed validation with `error parsing called workflow ... reference to workflow should be either a valid branch, tag, or commit`, blocking the release pipeline before plan could even run.
+
 ### Removed
 - **`.github/workflows/release-backfill.yml`.** The new putitoutthere reusable workflow creates GitHub Releases on tagging, and every gap in the `v0.2.x`/`v0.3.x` tag history has already been backfilled. The workflow's only remaining purpose was as a manual safety net, which is also covered by re-running the release pipeline.
 - **`.github/workflows/putitoutthere-check.yml`.** The PR dry-run added one more pinned-version touchpoint without catching anything the main release pipeline doesn't already surface on push to main.
