@@ -33,6 +33,12 @@ skipped a step).
 
 ---
 
+## Unreleased — fix `release.yml` reusable-workflow ref
+
+No migration required.
+
+---
+
 ## Unreleased — release pipeline collapsed onto putitoutthere reusable workflow
 
 No migration required.
