@@ -33,6 +33,12 @@ skipped a step).
 
 ---
 
+## Unreleased — release pipeline collapsed onto putitoutthere reusable workflow
+
+No migration required.
+
+---
+
 ## Unreleased — `MIGRATIONS.md` is now a per-PR requirement
 
 No migration required.

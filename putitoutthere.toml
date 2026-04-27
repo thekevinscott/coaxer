@@ -1,6 +1,3 @@
-# Put It Out There — release orchestration config.
-# Docs: https://github.com/thekevinscott/put-it-out-there
-
 [putitoutthere]
 version = 1
 
@@ -10,8 +7,6 @@ kind = "pypi"
 path = "."
 paths = ["coaxer/**", "pyproject.toml", "CHANGELOG.md"]
 build = "hatch"
-# Pre-putitoutthere releases used unprefixed `v{version}` tags (latest: v0.2.12).
-# Override the default `{name}-v{version}` so the planner keeps bumping from
-# that history instead of starting over at first_version.
+# Override the default `{name}-v{version}` so the planner keeps bumping
+# from the pre-putitoutthere `v0.2.x` tag history.
 tag_format = "v{version}"
-first_version = "0.1.0"
