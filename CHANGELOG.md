@@ -3,7 +3,13 @@
 ## Unreleased
 
 ### Removed
+- **`.github/workflows/release-backfill.yml`.** The new putitoutthere reusable workflow creates GitHub Releases on tagging, and every gap in the `v0.2.x`/`v0.3.x` tag history has already been backfilled. The workflow's only remaining purpose was as a manual safety net, which is also covered by re-running the release pipeline.
+- **`.github/workflows/putitoutthere-check.yml`.** The PR dry-run added one more pinned-version touchpoint without catching anything the main release pipeline doesn't already surface on push to main.
 - **All caching documentation.** Dropped the `## Caching` README section, deleted `docs/guide/caching.md`, removed the cache parameter row + cachetta example from `docs/api/agent-lm.md`, removed the `Caching` section and the `cache=` line from `docs/llms-full.md`, and removed the `Caching` nav entry from `mkdocs.yml`. Caching the compile-time LM is a deployment concern; downstream consumers can wrap `AgentLM`/`OpenAILM` themselves. Code-side removal of the `cache=` kwarg and the `[cache]` extra is tracked in #40.
+
+### Changed
+- **Release pipeline collapsed onto putitoutthere's reusable workflow.** `.github/workflows/release.yml` is now ~20 lines: it just calls `thekevinscott/putitoutthere/.github/workflows/release.yml@v1` with `secrets: inherit` and the required `contents: write` + `id-token: write` permissions. The hand-rolled `plan` / `build` / `publish` jobs (and every workaround they accreted — the `SETUPTOOLS_SCM_PRETEND_VERSION` shim, the `tee plan.json` guard, the manual `gh release create` step, the npm-token plumbing) are gone. Drops ~170 lines of workflow YAML and lets putitoutthere ship pipeline fixes without coaxer needing a workflow PR. Required permissions and OIDC trusted-publisher config sit on the consumer side; everything else is upstream's problem.
+- **`putitoutthere.toml`: trimmed to the required fields.** Dropped `first_version = "0.1.0"` (now the documented default) and the verbose comments. The remaining `tag_format = "v{version}"` is kept because coaxer's pre-putitoutthere tag history uses unprefixed `v{version}` tags.
 
 ### Added
 - **`release-backfill.yml` workflow.** `workflow_dispatch`-only one-off that walks every tag matching a glob (default `v*`) and runs `gh release create --generate-notes` for any that don't already have a corresponding GitHub Release. Used to seed Releases for the `v0.2.x`/`v0.3.x` tags that predate the `release.yml` change in #36, and as a safety net for any future tag that ships without one. Includes a `dry_run` toggle. (#35)
