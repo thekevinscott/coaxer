@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Fixed
+- **`putitoutthere.toml`: `paths` → `globs`.** putitoutthere `0.1.45+` renamed the per-package matcher key. Without the rename the workflow fails with `package.0.globs: Invalid input: expected array, received undefined; package.0: Unrecognized key: "paths"`.
 - **`release.yml` reusable-workflow ref: `@v1` → `@v0`.** putitoutthere's floating major tag is `v0` (its README example showing `@v1` was aspirational); on every push to main since #48, the workflow file failed validation with `error parsing called workflow ... reference to workflow should be either a valid branch, tag, or commit`, blocking the release pipeline before plan could even run.
 
 ### Removed
