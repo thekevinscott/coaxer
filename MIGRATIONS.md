@@ -33,6 +33,12 @@ skipped a step).
 
 ---
 
+## Unreleased — `release.yml` trim to recommended consumer shape
+
+No migration required.
+
+---
+
 ## Unreleased — `putitoutthere.toml` `paths` → `globs`
 
 No migration required.

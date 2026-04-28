@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Fixed
+- **`release.yml`: trim to the recommended consumer shape.** Removed the redundant workflow-level `permissions:` block and the `secrets: inherit` line — neither appears in upstream's recommended example. The publish job's OIDC mint was returning null silently (no warning logged), which the handler reads as `ACTIONS_ID_TOKEN_REQUEST_URL` being unset. Likely cause: declaring `permissions:` at both workflow and calling-job level (with `secrets: inherit` on top) confused GHA's permissions resolution for the reusable workflow, so the OIDC env var didn't propagate into the called workflow's publish job.
 - **`putitoutthere.toml`: `paths` → `globs`.** putitoutthere `0.1.45+` renamed the per-package matcher key. Without the rename the workflow fails with `package.0.globs: Invalid input: expected array, received undefined; package.0: Unrecognized key: "paths"`.
 - **`release.yml` reusable-workflow ref: `@v1` → `@v0`.** putitoutthere's floating major tag is `v0` (its README example showing `@v1` was aspirational); on every push to main since #48, the workflow file failed validation with `error parsing called workflow ... reference to workflow should be either a valid branch, tag, or commit`, blocking the release pipeline before plan could even run.
 
