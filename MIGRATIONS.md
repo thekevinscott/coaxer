@@ -39,6 +39,12 @@ No migration required.
 
 ---
 
+## Unreleased — `release.yml`: bump `download-artifact@v4` → `@v8`
+
+No migration required.
+
+---
+
 ## Unreleased — `release.yml` `pypi-publish` job: `environment: release`
 
 No migration required.
