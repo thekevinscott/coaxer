@@ -33,6 +33,12 @@ skipped a step).
 
 ---
 
+## Unreleased — `putitoutthere.toml` `paths` → `globs`
+
+No migration required.
+
+---
+
 ## Unreleased — fix `release.yml` reusable-workflow ref
 
 No migration required.

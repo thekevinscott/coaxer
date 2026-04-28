@@ -5,7 +5,7 @@ version = 1
 name = "coaxer"
 kind = "pypi"
 path = "."
-paths = ["coaxer/**", "pyproject.toml", "CHANGELOG.md"]
+globs = ["coaxer/**", "pyproject.toml", "CHANGELOG.md"]
 build = "hatch"
 # Override the default `{name}-v{version}` so the planner keeps bumping
 # from the pre-putitoutthere `v0.2.x` tag history.
