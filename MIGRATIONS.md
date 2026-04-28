@@ -39,6 +39,12 @@ No migration required.
 
 ---
 
+## Unreleased — `release.yml`: caller-side PyPI publish job
+
+No migration required.
+
+---
+
 ## Unreleased — `putitoutthere.toml` `paths` → `globs`
 
 No migration required.
