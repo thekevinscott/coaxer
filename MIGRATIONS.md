@@ -39,6 +39,12 @@ No migration required.
 
 ---
 
+## Unreleased — `release.yml` `pypi-publish` job: `environment: release`
+
+No migration required.
+
+---
+
 ## Unreleased — `release.yml`: caller-side PyPI publish job
 
 No migration required.

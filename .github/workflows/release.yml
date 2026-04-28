@@ -24,6 +24,7 @@ jobs:
     needs: release
     if: needs.release.outputs.has_pypi == 'true'
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       id-token: write
     steps:
