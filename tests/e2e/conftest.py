@@ -1,13 +1,13 @@
 """E2E test collection gate + shared fixtures.
 
-E2E tests hit real LLM endpoints with real credentials and real money. They
-are opt-in: set ``COAXER_E2E=1`` to enable collection. Without that env var,
-this conftest tells pytest to skip the directory entirely so ``uv run just
-ci`` never imports the modules (which would otherwise require ``openai`` /
-``anthropic`` and live credentials).
+E2E tests hit a real LLM endpoint (Anthropic via ``claude_agent_sdk``)
+with real credentials and real money. They are opt-in: set
+``COAXER_E2E=1`` to enable collection. Without that env var, this
+conftest tells pytest to skip the directory entirely so ``uv run just
+ci`` never imports the modules.
 
-Inside an enabled run, individual tests still skip cleanly when their
-specific provider credential is absent.
+Inside an enabled run, tests still skip cleanly when ``ANTHROPIC_API_KEY``
+is absent.
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ if not os.environ.get(E2E_FLAG):
     collect_ignore_glob = ["*_test.py"]
 
 
-FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "labels" / "demo"
+FIXTURE = Path(__file__).resolve().parents[1] / "__fixtures__" / "labels" / "demo"
 
 
 @pytest.fixture(scope="session")
@@ -65,30 +65,3 @@ def demo_inputs() -> dict:
         "description": "A curated list of awesome Python resources.",
         "stars": 200_000,
     }
-
-
-OUTPUT_FIELD_NAME = "output"
-
-
-def output_json_schema(meta: dict) -> dict:
-    """Build a strict JSON Schema for the artifact's output field."""
-    output = meta["fields"]["output"]
-    return {
-        "type": "object",
-        "properties": {OUTPUT_FIELD_NAME: _field_schema(output)},
-        "required": [OUTPUT_FIELD_NAME],
-        "additionalProperties": False,
-    }
-
-
-def _field_schema(field: dict) -> dict:
-    if field.get("values"):
-        return {"type": "string", "enum": list(field["values"])}
-    py_type = field.get("type", "str")
-    if py_type == "bool":
-        return {"type": "boolean"}
-    if py_type == "int":
-        return {"type": "integer"}
-    if py_type == "float":
-        return {"type": "number"}
-    return {"type": "string"}

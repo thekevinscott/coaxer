@@ -5,7 +5,7 @@ import pytest
 
 from coaxer.compiler import distill
 
-FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "labels" / "demo"
+FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "__fixtures__" / "labels" / "demo"
 
 
 def test_distill_writes_all_artifacts(tmp_path: Path):

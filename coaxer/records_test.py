@@ -4,7 +4,7 @@ import pytest
 
 from coaxer.records import Record, load_records
 
-FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "labels" / "demo"
+FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "__fixtures__" / "labels" / "demo"
 
 
 def _write_schema(folder: Path, inputs: dict, output: dict | None = None) -> None:
