@@ -15,7 +15,7 @@ from pathlib import Path
 
 from coaxer.prompt import CoaxedPrompt
 
-FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "labels" / "demo"
+FIXTURE = Path(__file__).resolve().parents[1] / "__fixtures__" / "labels" / "demo"
 
 
 def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:

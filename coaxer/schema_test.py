@@ -3,7 +3,7 @@ from pathlib import Path
 from coaxer.records import Record
 from coaxer.schema import Field, infer_schema, load_schema
 
-FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "labels" / "demo"
+FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "__fixtures__" / "labels" / "demo"
 
 
 def test_load_schema_from_folder():

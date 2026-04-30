@@ -21,7 +21,7 @@ from coaxer.dataclasses import CompletionResponse
 from coaxer.openai_lm import OpenAILM
 from coaxer.prompt import CoaxedPrompt
 
-FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "labels" / "demo"
+FIXTURE = Path(__file__).resolve().parents[1] / "__fixtures__" / "labels" / "demo"
 
 
 def _chat_response(content: str = "true", model: str = "llama3") -> dict:

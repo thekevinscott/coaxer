@@ -18,7 +18,7 @@ from coaxer.compiler import distill
 from coaxer.lm import AgentLM
 from coaxer.prompt import CoaxedPrompt
 
-FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "labels" / "demo"
+FIXTURE = Path(__file__).resolve().parents[1] / "__fixtures__" / "labels" / "demo"
 
 
 def test_rendered_coaxed_prompt_reaches_agent_sdk_unchanged(tmp_path: Path) -> None:

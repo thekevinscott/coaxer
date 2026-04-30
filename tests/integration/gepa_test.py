@@ -22,7 +22,7 @@ import pytest
 from coaxer.compiler import distill
 from coaxer.lm import AgentLM
 
-FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "labels" / "demo"
+FIXTURE = Path(__file__).resolve().parents[1] / "__fixtures__" / "labels" / "demo"
 
 
 class _StubProgram:
