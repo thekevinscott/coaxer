@@ -4,9 +4,11 @@ E2E tests hit a real LLM endpoint (Anthropic via ``claude_agent_sdk``)
 with real credentials and real money. They live under ``tests/e2e/``
 and CI never points pytest at this directory — running them is the
 agent's call (``uv run just test-e2e`` or ``uv run pytest tests/e2e/``)
-when a change touches the SDK-contract surface. ``ANTHROPIC_API_KEY``
-must be set; absent credentials surface as the SDK's auth error so
-misconfiguration is loud rather than silently skipped.
+when a change touches the SDK-contract surface. Auth comes from the
+local Claude Code session (``claude_agent_sdk`` invokes the ``claude``
+CLI, which uses an OAuth subscription login or ``ANTHROPIC_API_KEY`` —
+whichever is configured). No credentials need to be set explicitly for
+the agent's own runs.
 """
 
 from __future__ import annotations

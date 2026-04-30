@@ -141,7 +141,7 @@ E2E tests are **not** part of CI — they cost money and depend on live provider
 
 Failures block the PR until resolved, the same way unit/integration failures do.
 
-**Credentials.** `ANTHROPIC_API_KEY` as a local env var. If unset, the SDK raises an auth error — there's no skip-fallback, since running e2e without credentials is misconfiguration, not an expected case. CI never runs these.
+**Credentials.** `claude_agent_sdk` shells out to the local `claude` CLI, which authenticates via whatever Claude Code has configured — typically an OAuth subscription login (Pro/Max) or an `ANTHROPIC_API_KEY`. The agent's own runs piggyback on its existing Claude Code session, so no credentials need to be set explicitly. CI never runs these.
 
 ## Code Style
 

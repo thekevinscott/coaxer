@@ -33,7 +33,7 @@ skipped a step).
 
 ---
 
-## Unreleased — drop `COAXER_E2E` and `ANTHROPIC_API_KEY` skip from e2e tests
+## Unreleased — drop `COAXER_E2E` gate and `ANTHROPIC_API_KEY` precheck from e2e tests
 
 No migration required.
 
