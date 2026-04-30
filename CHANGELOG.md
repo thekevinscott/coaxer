@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- **`tests/e2e/` for real OpenAI + Anthropic round-trips.** Drives the `coax` CLI as a subprocess (no internal `distill()` import, no mocks) and feeds the resulting artifact to live `chat.completions` / `messages.create` calls, asserting the demo fixture's enum schema is honored end-to-end. Opt-in via `COAXER_E2E=1` so `uv run just ci` never collects the directory; each provider's test also skips cleanly when its API key is absent. New `just test-e2e` recipe and an agent-run policy in `AGENTS.md` keyed to the structured-output / SDK-contract surface. (#58)
+
 ### Changed
 - **`release.yml` `pypi-publish` job: bump `actions/download-artifact@v4` → `@v8`.** Clears the GitHub Actions Node 20 deprecation warning on the caller-side job ahead of the June 2026 forced-upgrade cutoff. The other Node 20 warnings on the run come from inside putitoutthere's reusable workflow (`release/plan`, `release/build`, `release/publish`) and need an upstream bump.
 

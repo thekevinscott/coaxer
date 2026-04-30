@@ -39,6 +39,12 @@ No migration required.
 
 ---
 
+## Unreleased — e2e tests (real OpenAI + Anthropic)
+
+No migration required.
+
+---
+
 ## Unreleased — `release.yml`: bump `download-artifact@v4` → `@v8`
 
 No migration required.

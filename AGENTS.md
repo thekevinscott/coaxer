@@ -116,15 +116,33 @@ TDD Order: integration tests first, then unit tests.
 
 - **Unit tests** (`coaxer/*_test.py`): colocated, mock everything except the function under test
 - **Integration tests** (`tests/integration/`): test multiple modules together with mocked externals (SDK, filesystem). ALL integration tests go here, not colocated.
+- **E2E tests** (`tests/e2e/`): hit real LLM endpoints (OpenAI + Anthropic) with real credentials. **Mock nothing.** Drive the `coax` CLI as a subprocess (no internal Python imports of `distill()`) so the user-facing entry point is what's verified end-to-end. Opt-in via `COAXER_E2E=1`; otherwise pytest skips collection of the directory entirely so `uv run just ci` never imports them.
 
 ### Running Tests
 
 ```bash
 uv run just test-unit        # Unit tests (colocated *_test.py)
 uv run just test-integration # Integration tests
+uv run just test-e2e         # E2E tests (real OpenAI + Anthropic; costs money)
 uv run just test-cov         # Unit tests with coverage
 uv run just ci               # Full local CI (lint + format + typecheck + tests)
 ```
+
+### When to run E2E (agent policy)
+
+E2E tests are **not** part of CI — they cost money and depend on live provider behavior. The agent (Claude Code) runs them locally as part of the development loop on a strict surface-area rule:
+
+**Run e2e before declaring a PR ready when the change touches:**
+- `CoaxedPrompt.response_format()` / structured-output helpers
+- `meta.json` shape — anything affecting how the output schema is persisted
+- `coaxer/cli.py` flags or stdout/stderr shape that consumers script against
+- The documented OpenAI/Anthropic call shapes in `docs/api/coaxed-prompt.md`
+
+**Skip e2e for** PRs that don't touch the SDK contract surface (CI tweaks, internal refactors, doc-only changes, unit-test-only changes).
+
+Failures block the PR until resolved, the same way unit/integration failures do.
+
+**Credentials.** `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` as local env vars. Each provider's tests skip cleanly if its key is missing — the run still passes if you've only set one. No GitHub Actions secrets are needed; CI never runs these.
 
 ## Code Style
 
@@ -171,6 +189,7 @@ coaxer/                   # Main package
 tests/
   fixtures/labels/demo/   # Label-folder fixture used by distill + records tests
   integration/            # Integration tests (mocked SDK)
+  e2e/                    # E2E tests against real OpenAI + Anthropic (opt-in via COAXER_E2E=1)
 ```
 
 ## Key Commands
