@@ -1,14 +1,12 @@
 """E2E shared fixtures.
 
-E2E tests hit a real LLM endpoint (Anthropic via ``claude_agent_sdk``)
-with real credentials and real money. They live under ``tests/e2e/``
-and CI never points pytest at this directory — running them is the
-agent's call (``uv run just test-e2e`` or ``uv run pytest tests/e2e/``)
-when a change touches the SDK-contract surface. Auth comes from the
-local Claude Code session (``claude_agent_sdk`` invokes the ``claude``
-CLI, which uses an OAuth subscription login or ``ANTHROPIC_API_KEY`` —
-whichever is configured). No credentials need to be set explicitly for
-the agent's own runs.
+E2E tests hit a real LLM endpoint (Anthropic via ``claude_agent_sdk``).
+They live under ``tests/e2e/`` and CI never points pytest at this
+directory — running them is the agent's call (``uv run just test-e2e``
+or ``uv run pytest tests/e2e/``) when a change touches the SDK-contract
+surface. Auth is the local Claude Code session: ``claude_agent_sdk``
+invokes the ``claude`` CLI, which uses the OAuth login from ``claude
+login``. The agent's own runs piggyback on its existing session.
 """
 
 from __future__ import annotations
