@@ -133,7 +133,6 @@ uv run just ci               # Full local CI (lint + format + typecheck + tests)
 E2E tests are **not** part of CI — they cost money and depend on live provider behavior. The agent (Claude Code) runs them locally as part of the development loop on a strict surface-area rule:
 
 **Run e2e before declaring a PR ready when the change touches:**
-- `CoaxedPrompt.response_format()` / structured-output helpers
 - `meta.json` shape — anything affecting how the output schema is persisted
 - `coaxer/cli.py` flags or stdout/stderr shape that consumers script against
 - The documented OpenAI/Anthropic call shapes in `docs/api/coaxed-prompt.md`

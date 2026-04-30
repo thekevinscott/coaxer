@@ -71,13 +71,7 @@ OUTPUT_FIELD_NAME = "output"
 
 
 def output_json_schema(meta: dict) -> dict:
-    """Build a strict JSON Schema for the artifact's output field.
-
-    Until ``CoaxedPrompt.response_format()`` lands (issue #58 dep), the e2e
-    tests construct the schema themselves from ``meta.json`` so the
-    wire-shape that ``response_format()`` will eventually wrap is exercised
-    directly against the providers.
-    """
+    """Build a strict JSON Schema for the artifact's output field."""
     output = meta["fields"]["output"]
     return {
         "type": "object",
