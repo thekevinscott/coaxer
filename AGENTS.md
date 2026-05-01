@@ -141,7 +141,7 @@ E2E tests are **not** part of CI — they cost money and depend on live provider
 
 Failures block the PR until resolved, the same way unit/integration failures do.
 
-**Credentials.** `claude_agent_sdk` shells out to the local `claude` CLI, which authenticates via the OAuth login from `claude login` (Pro/Max subscription). The agent's own runs piggyback on its existing Claude Code session, so no credentials need to be set explicitly. CI never runs these.
+**Credentials.** `claude_agent_sdk` shells out to the local `claude` CLI. The agent's own runs piggyback on its existing Claude Code session, so no credentials need to be set explicitly. CI never runs these.
 
 ## Code Style
 
