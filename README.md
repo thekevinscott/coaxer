@@ -39,6 +39,8 @@ Full walkthrough: [`docs/guide/getting-started.md`](docs/guide/getting-started.m
 
 `CoaxedPrompt(path, **bound)` is a `str` subclass. `str(p)` is the raw Jinja template; `p(**vars)` renders it (Jinja2 `StrictUndefined` — missing vars raise). Bound defaults at construction; call-time vars override.
 
+For structured-output APIs, `p.response_format` is a Pydantic model derived from the compiled output schema.
+
 Reference: [`docs/api/coaxed-prompt.md`](docs/api/coaxed-prompt.md).
 
 ## CLI

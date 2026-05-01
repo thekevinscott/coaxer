@@ -33,6 +33,35 @@ skipped a step).
 
 ---
 
+## Unreleased — `CoaxedPrompt.response_format`
+
+### (a) Summary
+New `@cached_property` on `CoaxedPrompt` returning a Pydantic model class derived from the compiled output schema. Additive — existing flows unchanged. Existing artifacts read fine; `output_name` falls back to `"output"` when absent from `meta.json`.
+
+### (b) Required changes
+None. Opt-in.
+
+| Area | Before | After |
+| ---- | ------ | ----- |
+| Structured output | Hand-build a schema from `meta.json["fields"]["output"]`. | `p.response_format`. |
+
+### (c) Deprecations removed
+None.
+
+### (d) Behavior changes without code changes
+- `meta.json` gains a top-level `output_name` field (default `"output"`). Files without it still load.
+- `pydantic` is now a declared direct dep (was transitive via DSPy).
+
+### (e) Verification
+```python
+from coaxer import CoaxedPrompt
+
+p = CoaxedPrompt("prompts/repo-classification")
+print(p.response_format.model_json_schema())
+```
+
+---
+
 ## Unreleased — relax `requires-python` to `>=3.13`
 
 ### (a) Summary

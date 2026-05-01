@@ -53,3 +53,46 @@ from pathlib import Path
 meta = json.loads(Path("prompts/repo-classification/meta.json").read_text())
 list(meta["fields"]["inputs"])  # ['readme', 'description', 'stars']
 ```
+
+## `p.response_format`
+
+A Pydantic model class derived from the compiled output schema. Cached after first access.
+
+```python
+Model = p.response_format
+Model.model_json_schema()
+# {'type': 'object', 'properties': {'is_collection': {'type': 'boolean'}}, ...}
+```
+
+### OpenAI
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+resp = client.chat.completions.parse(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": p(readme=..., stars=...)}],
+    response_format=p.response_format,
+)
+result = resp.choices[0].message.parsed
+```
+
+### Anthropic
+
+```python
+import anthropic
+
+Model = p.response_format
+client = anthropic.Anthropic()
+resp = client.messages.create(
+    model="claude-sonnet-4-6",
+    messages=[{"role": "user", "content": p(readme=..., stars=...)}],
+    tools=[{
+        "name": "respond",
+        "input_schema": Model.model_json_schema(),
+    }],
+    tool_choice={"type": "tool", "name": "respond"},
+)
+parsed = Model.model_validate(resp.content[0].input)
+```

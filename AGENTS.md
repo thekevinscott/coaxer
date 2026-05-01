@@ -118,6 +118,11 @@ TDD Order: integration tests first, then unit tests.
 - **Integration tests** (`tests/integration/`): test multiple modules together with mocked externals (SDK, filesystem). ALL integration tests go here, not colocated.
 - **E2E tests** (`tests/e2e/`): hit a real LLM endpoint (Anthropic) with real credentials. **Mock nothing.** Drive the `coax` CLI as a subprocess (no internal Python imports of `distill()`) so the user-facing entry point is what's verified end-to-end. CI never points pytest at this directory; running them is the agent's call.
 
+### Test structure
+
+- **Wrap related tests in `pytest_describe` blocks.** `describe_<thing>` for the unit under test, `it_<does_something>` for each behavior. Nest `describe_*` for sub-cases. New tests should follow this shape; old flat `def test_*` tests are being converted opportunistically.
+- **Use `pytest.mark.parametrize` where appropriate.** Whenever the same assertion shape repeats with different inputs (type mappings, enum values, before/after pairs), parametrize. Beats copy-pasted tests.
+
 ### Running Tests
 
 ```bash

@@ -105,8 +105,21 @@ filled = p(readme=new_readme, stars=1200)
 - `CoaxedPrompt(path, **bound)` — str subclass. `__new__` reads `prompt.jinja`. `**bound` sets default variables.
 - `str(p)` — raw template.
 - `p(**vars)` — Jinja2 `StrictUndefined` render. Missing vars raise `UndefinedError`. Call-time vars override bound defaults.
+- `p.response_format` — Pydantic model class derived from `meta.json`'s `fields.output`. Cached after first access.
 
 Because `CoaxedPrompt` is a `str`, it drops into any API that accepts a string.
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+resp = client.chat.completions.parse(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": p(readme=..., stars=...)}],
+    response_format=p.response_format,
+)
+parsed = resp.choices[0].message.parsed
+```
 
 ## `AgentLM`
 
