@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Changed
+- **Flat `def test_*` unit and integration tests converted to `pytest_describe` blocks.** Per the policy added in #56, the test suite now uses `describe_*` / `it_*` nesting throughout `coaxer/*_test.py` and `tests/integration/*_test.py`, with `parametrize` collapsing repeated assertion shapes (e.g. `records_test.py` scalar-handling cases, `compiler_test.py` template input slots, `records_test.py` schema-declared file fields). No behavior change to what's tested. (#61)
 - **E2E tests no longer gated on `COAXER_E2E=1` or precheck `ANTHROPIC_API_KEY`.** Directory separation is the gate — `[tool.pytest.ini_options] testpaths` narrows to `["coaxer", "tests/integration"]` so default `pytest` (CI's `just test-ci`) doesn't collect `tests/e2e/`; the agent runs `just test-e2e` explicitly when the SDK-contract surface is touched. Auth comes from the local Claude Code session that `claude_agent_sdk` rides on (OAuth via `claude login`); the agent's own runs piggyback on its existing session with no extra setup. Drops the env-var gymnastics in `tests/e2e/conftest.py` and the `COAXER_E2E=1` prefix on `just test-e2e`.
 
 ### Added

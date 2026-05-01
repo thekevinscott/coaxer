@@ -12,57 +12,50 @@ def _write_prompt(tmp: Path, body: str) -> Path:
     return tmp
 
 
-def test_is_str_subclass(tmp_path: Path):
-    path = _write_prompt(tmp_path / "p", "hello {{ name }}")
-    p = CoaxedPrompt(path)
-    assert isinstance(p, str)
+def describe_CoaxedPrompt():
+    def it_is_a_str_subclass(tmp_path: Path):
+        path = _write_prompt(tmp_path / "p", "hello {{ name }}")
+        p = CoaxedPrompt(path)
+        assert isinstance(p, str)
 
+    def it_returns_raw_template_as_str(tmp_path: Path):
+        path = _write_prompt(tmp_path / "p", "hello {{ name }}")
+        p = CoaxedPrompt(path)
+        assert str(p) == "hello {{ name }}"
 
-def test_str_returns_raw_template(tmp_path: Path):
-    path = _write_prompt(tmp_path / "p", "hello {{ name }}")
-    p = CoaxedPrompt(path)
-    assert str(p) == "hello {{ name }}"
+    def it_renders_template_when_called(tmp_path: Path):
+        path = _write_prompt(tmp_path / "p", "hello {{ name }}")
+        p = CoaxedPrompt(path)
+        assert p(name="world") == "hello world"
 
+    def it_raises_undefined_when_var_is_missing(tmp_path: Path):
+        path = _write_prompt(tmp_path / "p", "hello {{ name }}")
+        p = CoaxedPrompt(path)
+        with pytest.raises(UndefinedError):
+            p()
 
-def test_call_renders_template(tmp_path: Path):
-    path = _write_prompt(tmp_path / "p", "hello {{ name }}")
-    p = CoaxedPrompt(path)
-    assert p(name="world") == "hello world"
+    def it_applies_bound_defaults(tmp_path: Path):
+        path = _write_prompt(tmp_path / "p", "{{ role }}: {{ msg }}")
+        p = CoaxedPrompt(path, role="classifier")
+        assert p(msg="hi") == "classifier: hi"
 
+    def it_lets_call_time_args_override_bound(tmp_path: Path):
+        path = _write_prompt(tmp_path / "p", "{{ role }}")
+        p = CoaxedPrompt(path, role="classifier")
+        assert p(role="summarizer") == "summarizer"
 
-def test_missing_var_raises_undefined(tmp_path: Path):
-    path = _write_prompt(tmp_path / "p", "hello {{ name }}")
-    p = CoaxedPrompt(path)
-    with pytest.raises(UndefinedError):
-        p()
+    def it_raises_when_prompt_file_is_missing(tmp_path: Path):
+        tmp_path.joinpath("p").mkdir()
+        with pytest.raises(FileNotFoundError):
+            CoaxedPrompt(tmp_path / "p")
 
+    def it_accepts_string_path(tmp_path: Path):
+        path = _write_prompt(tmp_path / "p", "hi")
+        p = CoaxedPrompt(str(path))
+        assert str(p) == "hi"
 
-def test_bound_defaults_applied(tmp_path: Path):
-    path = _write_prompt(tmp_path / "p", "{{ role }}: {{ msg }}")
-    p = CoaxedPrompt(path, role="classifier")
-    assert p(msg="hi") == "classifier: hi"
-
-
-def test_call_time_overrides_bound(tmp_path: Path):
-    path = _write_prompt(tmp_path / "p", "{{ role }}")
-    p = CoaxedPrompt(path, role="classifier")
-    assert p(role="summarizer") == "summarizer"
-
-
-def test_missing_prompt_file_raises(tmp_path: Path):
-    tmp_path.joinpath("p").mkdir()
-    with pytest.raises(FileNotFoundError):
-        CoaxedPrompt(tmp_path / "p")
-
-
-def test_accepts_string_path(tmp_path: Path):
-    path = _write_prompt(tmp_path / "p", "hi")
-    p = CoaxedPrompt(str(path))
-    assert str(p) == "hi"
-
-
-def test_preserves_jinja_braces_in_raw_template(tmp_path: Path):
-    # templates often have JSON / code braces that must not collide
-    path = _write_prompt(tmp_path / "p", 'Return {"ok": true} with {{ msg }}')
-    p = CoaxedPrompt(path)
-    assert p(msg="done") == 'Return {"ok": true} with done'
+    def it_preserves_jinja_braces_in_raw_template(tmp_path: Path):
+        # templates often have JSON / code braces that must not collide
+        path = _write_prompt(tmp_path / "p", 'Return {"ok": true} with {{ msg }}')
+        p = CoaxedPrompt(path)
+        assert p(msg="done") == 'Return {"ok": true} with done'

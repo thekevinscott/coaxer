@@ -86,112 +86,110 @@ class _KwargsCapturingOptimizer:
         return _StubProgram()
 
 
-def test_distill_with_gepa_writes_dspy_json_with_program_state(tmp_path: Path) -> None:
-    out = tmp_path / "out"
+def describe_distill_with_gepa():
+    def it_writes_dspy_json_with_program_state(tmp_path: Path) -> None:
+        out = tmp_path / "out"
 
-    with (
-        patch("coaxer.lm.run_sync", return_value="true"),
-        patch("dspy.GEPA", _StubOptimizer),
-    ):
-        lm = AgentLM()
-        distill(FIXTURE, out, lm=lm, optimizer="gepa")
+        with (
+            patch("coaxer.lm.run_sync", return_value="true"),
+            patch("dspy.GEPA", _StubOptimizer),
+        ):
+            lm = AgentLM()
+            distill(FIXTURE, out, lm=lm, optimizer="gepa")
 
-    assert (out / "dspy.json").is_file()
-    state = json.loads((out / "dspy.json").read_text())
-    # State must be non-empty and reflect our stub's shape.
-    assert state
-    assert state["signature"] == "stub"
-    assert "predictors" in state
+        assert (out / "dspy.json").is_file()
+        state = json.loads((out / "dspy.json").read_text())
+        # State must be non-empty and reflect our stub's shape.
+        assert state
+        assert state["signature"] == "stub"
+        assert "predictors" in state
 
+    def it_requires_an_lm(tmp_path: Path) -> None:
+        """Missing ``lm`` must surface as a clear error, not a silent no-op."""
+        out = tmp_path / "out"
+        with (
+            patch("dspy.GEPA", _StubOptimizer),
+            pytest.raises(ValueError, match="GEPA requires an `lm`"),
+        ):
+            distill(FIXTURE, out, lm=None, optimizer="gepa")
 
-def test_distill_gepa_requires_lm(tmp_path: Path) -> None:
-    """Missing ``lm`` must surface as a clear error, not a silent no-op."""
-    out = tmp_path / "out"
-    with (
-        patch("dspy.GEPA", _StubOptimizer),
-        pytest.raises(ValueError, match="GEPA requires an `lm`"),
-    ):
-        distill(FIXTURE, out, lm=None, optimizer="gepa")
+    def it_records_optimizer_in_meta(tmp_path: Path) -> None:
+        out = tmp_path / "out"
+        with patch("coaxer.lm.run_sync", return_value="true"), patch("dspy.GEPA", _StubOptimizer):
+            distill(FIXTURE, out, lm=AgentLM(), optimizer="gepa")
 
+        meta = json.loads((out / "meta.json").read_text())
+        assert meta["optimizer"] == "gepa"
+        assert meta["example_count"] == 3
 
-def test_distill_gepa_meta_records_optimizer(tmp_path: Path) -> None:
-    out = tmp_path / "out"
-    with patch("coaxer.lm.run_sync", return_value="true"), patch("dspy.GEPA", _StubOptimizer):
-        distill(FIXTURE, out, lm=AgentLM(), optimizer="gepa")
+    def describe_metric_contract():
+        def it_accepts_dspy3_five_arg_signature(tmp_path: Path) -> None:
+            """``_run_gepa``'s metric must satisfy DSPy 3's 5-arg contract.
 
-    meta = json.loads((out / "meta.json").read_text())
-    assert meta["optimizer"] == "gepa"
-    assert meta["example_count"] == 3
+            Regression test for https://github.com/thekevinscott/coaxer/issues/26:
+            DSPy 3 validates ``inspect.signature(metric).bind(None, None, None, None, None)``
+            inside ``dspy.GEPA.__init__``. A 3-arg metric raises TypeError there.
+            """
+            out = tmp_path / "out"
+            _MetricCapturingOptimizer.captured_metric = None
 
+            with (
+                patch("coaxer.lm.run_sync", return_value="true"),
+                patch("dspy.GEPA", _MetricCapturingOptimizer),
+            ):
+                distill(FIXTURE, out, lm=AgentLM(), optimizer="gepa")
 
-def test_distill_gepa_metric_accepts_dspy3_five_arg_signature(tmp_path: Path) -> None:
-    """``_run_gepa``'s metric must satisfy DSPy 3's 5-arg contract.
+            metric = _MetricCapturingOptimizer.captured_metric
+            assert metric is not None, "metric was never passed to dspy.GEPA"
+            # The 5-arg bind must succeed; this is the exact check DSPy 3 runs.
+            inspect.signature(metric).bind(None, None, None, None, None)
 
-    Regression test for https://github.com/thekevinscott/coaxer/issues/26:
-    DSPy 3 validates ``inspect.signature(metric).bind(None, None, None, None, None)``
-    inside ``dspy.GEPA.__init__``. A 3-arg metric raises TypeError there.
-    """
-    out = tmp_path / "out"
-    _MetricCapturingOptimizer.captured_metric = None
+            # Sanity: scoring still works -- matching gold/pred yields 1.0, mismatch 0.0.
+            class _Obj:
+                def __init__(self, **kwargs: object) -> None:
+                    self.__dict__.update(kwargs)
 
-    with (
-        patch("coaxer.lm.run_sync", return_value="true"),
-        patch("dspy.GEPA", _MetricCapturingOptimizer),
-    ):
-        distill(FIXTURE, out, lm=AgentLM(), optimizer="gepa")
+            assert metric(_Obj(output="true"), _Obj(output="true")) == 1.0
+            assert metric(_Obj(output="true"), _Obj(output="false")) == 0.0
 
-    metric = _MetricCapturingOptimizer.captured_metric
-    assert metric is not None, "metric was never passed to dspy.GEPA"
-    # The 5-arg bind must succeed; this is the exact check DSPy 3 runs.
-    inspect.signature(metric).bind(None, None, None, None, None)
+    def describe_reflection_lm():
+        def it_defaults_to_main_lm(tmp_path: Path) -> None:
+            """Regression for #43: ``_run_gepa`` must pass ``reflection_lm`` to ``dspy.GEPA``.
 
-    # Sanity: scoring still works -- matching gold/pred yields 1.0, mismatch 0.0.
-    class _Obj:
-        def __init__(self, **kwargs: object) -> None:
-            self.__dict__.update(kwargs)
+            DSPy 3's ``dspy.GEPA.__init__`` asserts ``reflection_lm is not None`` when
+            no custom ``instruction_proposer`` is set. Without a default, every
+            ``coax --optimizer gepa`` invocation crashes before optimization starts.
+            The compiler now defaults ``reflection_lm`` to the program's main ``lm`` so
+            the zero-config flow works.
+            """
+            out = tmp_path / "out"
+            _KwargsCapturingOptimizer.captured_kwargs = {}
 
-    assert metric(_Obj(output="true"), _Obj(output="true")) == 1.0
-    assert metric(_Obj(output="true"), _Obj(output="false")) == 0.0
+            with (
+                patch("coaxer.lm.run_sync", return_value="true"),
+                patch("dspy.GEPA", _KwargsCapturingOptimizer),
+            ):
+                lm = AgentLM()
+                distill(FIXTURE, out, lm=lm, optimizer="gepa")
 
+            captured = _KwargsCapturingOptimizer.captured_kwargs
+            assert captured.get("reflection_lm") is lm, (
+                "reflection_lm should default to the main lm when not explicitly provided"
+            )
 
-def test_distill_gepa_defaults_reflection_lm_to_main_lm(tmp_path: Path) -> None:
-    """Regression for #43: ``_run_gepa`` must pass ``reflection_lm`` to ``dspy.GEPA``.
+        def it_accepts_explicit_override(tmp_path: Path) -> None:
+            """An explicit ``reflection_lm`` overrides the main-lm default."""
+            out = tmp_path / "out"
+            _KwargsCapturingOptimizer.captured_kwargs = {}
 
-    DSPy 3's ``dspy.GEPA.__init__`` asserts ``reflection_lm is not None`` when
-    no custom ``instruction_proposer`` is set. Without a default, every
-    ``coax --optimizer gepa`` invocation crashes before optimization starts.
-    The compiler now defaults ``reflection_lm`` to the program's main ``lm`` so
-    the zero-config flow works.
-    """
-    out = tmp_path / "out"
-    _KwargsCapturingOptimizer.captured_kwargs = {}
+            with (
+                patch("coaxer.lm.run_sync", return_value="true"),
+                patch("dspy.GEPA", _KwargsCapturingOptimizer),
+            ):
+                main_lm = AgentLM()
+                reflection_lm = AgentLM()
+                distill(FIXTURE, out, lm=main_lm, reflection_lm=reflection_lm, optimizer="gepa")
 
-    with (
-        patch("coaxer.lm.run_sync", return_value="true"),
-        patch("dspy.GEPA", _KwargsCapturingOptimizer),
-    ):
-        lm = AgentLM()
-        distill(FIXTURE, out, lm=lm, optimizer="gepa")
-
-    captured = _KwargsCapturingOptimizer.captured_kwargs
-    assert captured.get("reflection_lm") is lm, (
-        "reflection_lm should default to the main lm when not explicitly provided"
-    )
-
-
-def test_distill_gepa_accepts_explicit_reflection_lm_override(tmp_path: Path) -> None:
-    """An explicit ``reflection_lm`` overrides the main-lm default."""
-    out = tmp_path / "out"
-    _KwargsCapturingOptimizer.captured_kwargs = {}
-
-    with (
-        patch("coaxer.lm.run_sync", return_value="true"),
-        patch("dspy.GEPA", _KwargsCapturingOptimizer),
-    ):
-        main_lm = AgentLM()
-        reflection_lm = AgentLM()
-        distill(FIXTURE, out, lm=main_lm, reflection_lm=reflection_lm, optimizer="gepa")
-
-    captured = _KwargsCapturingOptimizer.captured_kwargs
-    assert captured.get("reflection_lm") is reflection_lm
-    assert captured.get("reflection_lm") is not main_lm
+            captured = _KwargsCapturingOptimizer.captured_kwargs
+            assert captured.get("reflection_lm") is reflection_lm
+            assert captured.get("reflection_lm") is not main_lm

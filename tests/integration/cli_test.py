@@ -28,56 +28,55 @@ def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_cli_writes_all_artifacts(tmp_path: Path) -> None:
-    out = tmp_path / "prompt_out"
-    result = _run_cli(str(FIXTURE), "--out", str(out))
+def describe_coax_cli():
+    def describe_successful_compile():
+        def it_writes_all_artifacts(tmp_path: Path) -> None:
+            out = tmp_path / "prompt_out"
+            result = _run_cli(str(FIXTURE), "--out", str(out))
 
-    assert result.returncode == 0, result.stderr
-    assert (out / "prompt.jinja").is_file()
-    assert (out / "meta.json").is_file()
-    assert (out / "history.jsonl").is_file()
-    assert f"Wrote prompt to {out}/prompt.jinja" in result.stdout
+            assert result.returncode == 0, result.stderr
+            assert (out / "prompt.jinja").is_file()
+            assert (out / "meta.json").is_file()
+            assert (out / "history.jsonl").is_file()
+            assert f"Wrote prompt to {out}/prompt.jinja" in result.stdout
 
+        def it_produces_output_renderable_via_coaxed_prompt(tmp_path: Path) -> None:
+            out = tmp_path / "prompt_out"
+            result = _run_cli(str(FIXTURE), "--out", str(out))
+            assert result.returncode == 0, result.stderr
 
-def test_cli_output_renders_via_coaxed_prompt(tmp_path: Path) -> None:
-    out = tmp_path / "prompt_out"
-    result = _run_cli(str(FIXTURE), "--out", str(out))
-    assert result.returncode == 0, result.stderr
+            p = CoaxedPrompt(out)
+            filled = p(readme="# hi", description="demo repo", stars=42)
+            assert "# hi" in filled
+            assert "demo repo" in filled
+            assert "42" in filled
 
-    p = CoaxedPrompt(out)
-    filled = p(readme="# hi", description="demo repo", stars=42)
-    assert "# hi" in filled
-    assert "demo repo" in filled
-    assert "42" in filled
+        def it_respects_output_name_flag(tmp_path: Path) -> None:
+            """``--output-name`` should reach the signature builder, shaping meta.json."""
+            import json
 
+            out = tmp_path / "prompt_out"
+            result = _run_cli(str(FIXTURE), "--out", str(out), "--output-name", "is_curated")
+            assert result.returncode == 0, result.stderr
 
-def test_cli_respects_output_name_flag(tmp_path: Path) -> None:
-    """``--output-name`` should reach the signature builder, shaping meta.json."""
-    import json
+            meta = json.loads((out / "meta.json").read_text())
+            # Input field names are unchanged; the output field name flag travels
+            # through dspy.make_signature, which is exercised by _render_template.
+            assert set(meta["fields"]["inputs"]) == {"readme", "description", "stars"}
+            template = (out / "prompt.jinja").read_text()
+            for name in ("readme", "description", "stars"):
+                assert f"{{{{ {name} }}}}" in template
 
-    out = tmp_path / "prompt_out"
-    result = _run_cli(str(FIXTURE), "--out", str(out), "--output-name", "is_curated")
-    assert result.returncode == 0, result.stderr
+    def describe_invocation_errors():
+        def it_errors_on_missing_labels_dir(tmp_path: Path) -> None:
+            out = tmp_path / "prompt_out"
+            missing = tmp_path / "nonexistent"
+            result = _run_cli(str(missing), "--out", str(out))
 
-    meta = json.loads((out / "meta.json").read_text())
-    # Input field names are unchanged; the output field name flag travels
-    # through dspy.make_signature, which is exercised by _render_template.
-    assert set(meta["fields"]["inputs"]) == {"readme", "description", "stars"}
-    template = (out / "prompt.jinja").read_text()
-    for name in ("readme", "description", "stars"):
-        assert f"{{{{ {name} }}}}" in template
+            assert result.returncode != 0
+            assert not (out / "prompt.jinja").exists()
 
-
-def test_cli_errors_on_missing_labels_dir(tmp_path: Path) -> None:
-    out = tmp_path / "prompt_out"
-    missing = tmp_path / "nonexistent"
-    result = _run_cli(str(missing), "--out", str(out))
-
-    assert result.returncode != 0
-    assert not (out / "prompt.jinja").exists()
-
-
-def test_cli_requires_out_flag(tmp_path: Path) -> None:
-    result = _run_cli(str(FIXTURE))
-    assert result.returncode != 0
-    assert "--out" in result.stderr
+        def it_requires_out_flag(tmp_path: Path) -> None:
+            result = _run_cli(str(FIXTURE))
+            assert result.returncode != 0
+            assert "--out" in result.stderr
