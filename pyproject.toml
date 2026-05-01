@@ -85,7 +85,7 @@ known-first-party = ["coaxer"]
 quote-style = "double"
 
 [tool.pytest.ini_options]
-testpaths = ["coaxer", "tests"]
+testpaths = ["coaxer", "tests/integration"]
 python_files = ["*_test.py"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"

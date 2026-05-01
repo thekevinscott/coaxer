@@ -116,7 +116,7 @@ TDD Order: integration tests first, then unit tests.
 
 - **Unit tests** (`coaxer/*_test.py`): colocated, mock everything except the function under test
 - **Integration tests** (`tests/integration/`): test multiple modules together with mocked externals (SDK, filesystem). ALL integration tests go here, not colocated.
-- **E2E tests** (`tests/e2e/`): hit a real LLM endpoint (Anthropic) with real credentials. **Mock nothing.** Drive the `coax` CLI as a subprocess (no internal Python imports of `distill()`) so the user-facing entry point is what's verified end-to-end. Opt-in via `COAXER_E2E=1`; otherwise pytest skips collection of the directory entirely so `uv run just ci` never imports them.
+- **E2E tests** (`tests/e2e/`): hit a real LLM endpoint (Anthropic) with real credentials. **Mock nothing.** Drive the `coax` CLI as a subprocess (no internal Python imports of `distill()`) so the user-facing entry point is what's verified end-to-end. CI never points pytest at this directory; running them is the agent's call.
 
 ### Running Tests
 
@@ -141,7 +141,7 @@ E2E tests are **not** part of CI — they cost money and depend on live provider
 
 Failures block the PR until resolved, the same way unit/integration failures do.
 
-**Credentials.** `ANTHROPIC_API_KEY` as a local env var. The e2e test skips cleanly when the key is missing. No GitHub Actions secrets are needed; CI never runs these.
+**Credentials.** `claude_agent_sdk` shells out to the local `claude` CLI. The agent's own runs piggyback on its existing Claude Code session, so no credentials need to be set explicitly. CI never runs these.
 
 ## Code Style
 
@@ -188,7 +188,7 @@ coaxer/                   # Main package
 tests/
   __fixtures__/labels/demo/   # Label-folder fixture used by distill + records tests
   integration/            # Integration tests (mocked SDK)
-  e2e/                    # E2E tests against real Anthropic (opt-in via COAXER_E2E=1)
+  e2e/                    # E2E tests against real Anthropic (agent-run; not part of CI)
 ```
 
 ## Key Commands

@@ -51,9 +51,9 @@ test-ci:
 test-integration:
     uv run pytest tests/integration/
 
-# Run e2e tests against real Anthropic. Requires ANTHROPIC_API_KEY. NOT part of CI.
+# Run e2e tests against real Anthropic via the local claude_agent_sdk session. NOT part of CI.
 test-e2e *args:
-    COAXER_E2E=1 uv run pytest tests/e2e/ {{args}}
+    uv run pytest tests/e2e/ {{args}}
 
 # Watch unit tests
 test-unit-watch *args:

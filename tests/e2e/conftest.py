@@ -1,19 +1,17 @@
-"""E2E test collection gate + shared fixtures.
+"""E2E shared fixtures.
 
-E2E tests hit a real LLM endpoint (Anthropic via ``claude_agent_sdk``)
-with real credentials and real money. They are opt-in: set
-``COAXER_E2E=1`` to enable collection. Without that env var, this
-conftest tells pytest to skip the directory entirely so ``uv run just
-ci`` never imports the modules.
-
-Inside an enabled run, tests still skip cleanly when ``ANTHROPIC_API_KEY``
-is absent.
+E2E tests hit a real LLM endpoint (Anthropic via ``claude_agent_sdk``).
+They live under ``tests/e2e/`` and CI never points pytest at this
+directory — running them is the agent's call (``uv run just test-e2e``
+or ``uv run pytest tests/e2e/``) when a change touches the SDK-contract
+surface. Auth is the local Claude Code session: ``claude_agent_sdk``
+invokes the ``claude`` CLI, which uses the OAuth login from ``claude
+login``. The agent's own runs piggyback on its existing session.
 """
 
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
 from collections.abc import Callable
@@ -21,12 +19,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
-E2E_FLAG = "COAXER_E2E"
-
-if not os.environ.get(E2E_FLAG):
-    collect_ignore_glob = ["*_test.py"]
-
 
 DEMO_FIXTURE = Path(__file__).resolve().parents[1] / "__fixtures__" / "labels" / "demo"
 
@@ -82,8 +74,6 @@ def agent_lm():
     ``tools=[]`` and ``max_turns=1`` constrain the session to a single
     classification-style response with no filesystem / agent loop.
     """
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        pytest.skip("ANTHROPIC_API_KEY not set")
     from coaxer.lm import AgentLM
 
     return AgentLM(tools=[], max_turns=1)

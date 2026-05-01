@@ -33,6 +33,12 @@ skipped a step).
 
 ---
 
+## Unreleased — drop `COAXER_E2E` gate and `ANTHROPIC_API_KEY` precheck from e2e tests
+
+No migration required.
+
+---
+
 ## Unreleased — `release.yml` trim to recommended consumer shape
 
 No migration required.
