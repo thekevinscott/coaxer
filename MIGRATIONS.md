@@ -62,6 +62,12 @@ print(p.response_format.model_json_schema())
 
 ---
 
+## Unreleased — `diff-cover` 100% on new lines
+
+No migration required.
+
+---
+
 ## Unreleased — relax `requires-python` to `>=3.13`
 
 ### (a) Summary

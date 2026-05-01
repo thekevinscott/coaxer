@@ -112,6 +112,21 @@ Changes to any of these require the full 5-section template. Anything else takes
 
 TDD Order: integration tests first, then unit tests.
 
+### Coverage policy
+
+**New code ships at 100% line coverage.** New modules, new functions, and new branches added to existing functions must be fully covered by tests. Existing-code shortfalls are converted opportunistically alongside other changes — no backfill sprint.
+
+Enforced by the `Test` CI job via `diff-cover`: on every PR, lines added in the diff (vs. the base branch) must be 100% covered or the job fails. The project-wide `fail_under` floor in `pyproject.toml` is a separate, weaker gate.
+
+**`pragma: no cover` discipline.** Allowed for genuinely unreachable code — defensive `else` after exhausted `if/elif`, `TYPE_CHECKING` blocks, `__main__` guards, re-raises after logging. **Every pragma must carry an inline reason** on the same line: `# pragma: no cover -- TYPE_CHECKING block`. A bare `# pragma: no cover` is a code-review red flag.
+
+Run locally before pushing:
+
+```bash
+uv run just test-ci      # produces coverage.xml
+uv run just diff-cover   # fails if any new line is uncovered
+```
+
 ### Test organization
 
 - **Unit tests** (`coaxer/*_test.py`): colocated, mock everything except the function under test
