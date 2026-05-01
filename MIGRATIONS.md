@@ -33,6 +33,12 @@ skipped a step).
 
 ---
 
+## Unreleased — flat tests converted to `pytest_describe`
+
+No migration required.
+
+---
+
 ## Unreleased — drop `COAXER_E2E` gate and `ANTHROPIC_API_KEY` precheck from e2e tests
 
 No migration required.
