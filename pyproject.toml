@@ -26,6 +26,7 @@ dev = [
     "pytest-watcher>=0.4",
     "pre-commit>=4.0",
     "ty>=0.0.1a7,<0.0.25",
+    "diff-cover>=9.0",
 ]
 
 [project.scripts]

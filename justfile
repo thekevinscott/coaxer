@@ -47,6 +47,16 @@ test-cov:
 test-ci:
     uv run pytest --cov --cov-report=xml
 
+# Enforce 100% line coverage on lines changed vs. origin/main.
+# Reads coverage.xml (run `just test-ci` first) and fails if any new diff
+# line is uncovered. Tracks issue #65.
+diff-cover compare_branch="origin/main":
+    uv run diff-cover coverage.xml \
+        --compare-branch={{compare_branch}} \
+        --fail-under=100 \
+        --show-uncovered \
+        --include-untracked
+
 # Run integration tests
 test-integration:
     uv run pytest tests/integration/

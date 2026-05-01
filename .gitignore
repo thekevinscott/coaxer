@@ -14,6 +14,7 @@ tmp/
 .claude/settings.local.json
 .claude/worktrees/
 .coverage
+coverage.xml
 .worktrees
 
 # Docs build output
