@@ -33,5 +33,5 @@ filled = p(readme=new_readme, stars=1200)
 
 - **Label folder** — one directory per record. `record.json` holds scalar fields; sibling files (`readme.md`, `logo.png`) carry large text or binary inputs.
 - **`coax`** — reads the folder, builds a DSPy signature internally, optionally runs GEPA, writes `prompt.jinja` + `meta.json` + `dspy.json` + `history.jsonl`.
-- **`CoaxedPrompt(path)`** — a `str` subclass. `str(p)` is the raw Jinja template; `p(**vars)` renders it. Drops in anywhere a string is accepted.
+- **`CoaxedPrompt(path)`** — a `str` subclass. `str(p)` is the raw Jinja template; `p(**vars)` renders it. Drops in anywhere a string is accepted. `p.response_format` is a Pydantic model for structured-output APIs.
 - **`AgentLM` / `OpenAILM`** — LLM backends for the optional compile-time optimizer. See the [API reference](api/agent-lm.md).

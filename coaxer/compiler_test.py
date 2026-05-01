@@ -82,3 +82,16 @@ def describe_distill():
             assert "Respond with exactly one of:" in template
             assert "true" in template
             assert "false" in template
+
+    def describe_output_name():
+        def it_defaults_to_output_in_meta(tmp_path: Path):
+            out = tmp_path / "prompt_out"
+            distill(FIXTURE, out, optimizer=None)
+            meta = json.loads((out / "meta.json").read_text())
+            assert meta["output_name"] == "output"
+
+        def it_persists_a_custom_output_name(tmp_path: Path):
+            out = tmp_path / "prompt_out"
+            distill(FIXTURE, out, optimizer=None, output_name="is_curated")
+            meta = json.loads((out / "meta.json").read_text())
+            assert meta["output_name"] == "is_curated"

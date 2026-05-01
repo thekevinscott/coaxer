@@ -69,6 +69,7 @@ def distill(
         "optimizer": optimizer,
         "example_count": len(records),
         "label_hash": _hash_labels(labels),
+        "output_name": output_name,
         "fields": {
             "inputs": {n: asdict(f) for n, f in schema.inputs.items()},
             "output": asdict(schema.output),

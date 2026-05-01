@@ -98,6 +98,22 @@ p = CoaxedPrompt("prompts/repo-classification", role="classifier")
 filled = p(role="summarizer", readme=..., stars=...)  # call-time wins
 ```
 
+## Optional: structured output
+
+`p.response_format` is a Pydantic model class derived from the compiled output schema.
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+resp = client.chat.completions.parse(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": p(readme=..., stars=...)}],
+    response_format=p.response_format,
+)
+print(resp.choices[0].message.parsed.is_collection)
+```
+
 ## Optional: back the compile step with a specific LLM
 
 ```python
