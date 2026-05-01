@@ -33,6 +33,49 @@ skipped a step).
 
 ---
 
+## Unreleased — relax `requires-python` to `>=3.13`
+
+### (a) Summary
+`pyproject.toml` now declares `requires-python = ">=3.13"` (was `>=3.14`).
+Pydantic 2.13.3 calls `typing._eval_type(..., prefer_fwd_module=True)` on
+Python 3.14, but that kwarg only landed between 3.14.0rc2 and 3.14 final;
+cloud sandbox sessions that uv resolves to 3.14.0rc2 crash at import time.
+Lowering the floor unblocks 3.13 consumers and lets uv pick the system 3.13
+in those sandboxes — pydantic's `>=3.13` branch doesn't pass the broken
+kwarg. Affects: anyone whose lockfile or environment was previously pinned
+to 3.14 *because of* this floor; you can now install on 3.13 too. No
+behavior change for consumers already on 3.14.
+
+### (b) Required changes
+
+| Area | Before | After |
+| ---- | ------ | ----- |
+| `pyproject.toml` consumer constraint | `requires-python = ">=3.14"` | `requires-python = ">=3.13"` |
+
+No code or import changes are required for consumers.
+
+### (c) Deprecations removed
+None.
+
+### (d) Behavior changes without code changes
+None. Coaxer's runtime behavior is unchanged on either 3.13 or 3.14.
+
+### (e) Verification
+On Python 3.13 (or 3.14):
+
+```bash
+uv pip install coaxer
+python -c "from coaxer import CoaxedPrompt; print('ok')"
+```
+
+Expected output: `ok`. If you see
+`TypeError: _eval_type() got an unexpected keyword argument 'prefer_fwd_module'`,
+your environment is still on 3.14.0rc2 with the older `coaxer` install —
+re-run `uv sync` against the new lockfile or pin Python to `>=3.13` and
+let uv pick a working interpreter.
+
+---
+
 ## Unreleased — flat tests converted to `pytest_describe`
 
 No migration required.
