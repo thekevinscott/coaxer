@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Changed
+- **CI: split the Python `Test` workflow into three separate checks — `Test Unit`, `Test Integration`, and `Coverage`.** `test.yml` previously bundled unit + integration runs and the `diff-cover` gate behind a single `test` check, so a failure required opening logs to tell which ring fired. The new layout runs `pytest coaxer/` in `Test Unit`, `pytest tests/integration/` in `Test Integration`, and the full coverage + `diff-cover --fail-under=100` pass in `Coverage` — each fails for one reason only. Mirrors the JS-side structure tracked in #57. Bumping the project-wide `--fail-under` floor stays out of scope (tracked in #66); E2E remains agent-run, not CI. (#68) See [MIGRATIONS.md](MIGRATIONS.md#unreleased--ci-split-python-test-workflow).
+
 ### Added
 - **`diff-cover` CI gate enforcing 100% line coverage on new diff lines.** The `Test` workflow now runs `diff-cover coverage.xml --compare-branch=origin/<base> --fail-under=100` on every PR, so any line added in the diff that isn't exercised by a test fails the job. Existing untested code is grandfathered (no backfill sprint); the project-wide `fail_under = 70` in `pyproject.toml` stays as the weaker whole-project floor — bumping that is tracked separately in #66. AGENTS.md gains a Coverage policy section documenting the rule and the `pragma: no cover` discipline (inline reason required). (#65) See [MIGRATIONS.md](MIGRATIONS.md#unreleased--diff-cover-100-on-new-lines).
 
