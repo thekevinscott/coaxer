@@ -1,0 +1,12 @@
+{
+  "compiled_at": "2026-01-15T12:00:00+00:00",
+  "optimizer": null,
+  "example_count": 2,
+  "label_hash": "0000000000000000",
+  "fields": {
+    "inputs": {
+      "query": {"type": "str", "desc": "User query", "values": null, "backing": null}
+    },
+    "output": {"type": "bool", "desc": "True if in scope", "values": null, "backing": null}
+  }
+}

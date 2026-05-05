@@ -1,0 +1,13 @@
+{
+  "compiled_at": "2026-01-15T12:00:00+00:00",
+  "optimizer": null,
+  "example_count": 1,
+  "label_hash": "ffffffffffffffff",
+  "output_name": "encoded",
+  "fields": {
+    "inputs": {
+      "text": {"type": "str", "desc": "Source text", "values": null, "backing": null}
+    },
+    "output": {"type": "bytes", "desc": "Encoded bytes", "values": null, "backing": null}
+  }
+}

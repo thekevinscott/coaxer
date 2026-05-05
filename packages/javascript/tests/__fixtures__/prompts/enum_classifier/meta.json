@@ -1,0 +1,14 @@
+{
+  "compiled_at": "2026-01-15T12:00:00+00:00",
+  "optimizer": null,
+  "example_count": 3,
+  "label_hash": "abc123def456abcd",
+  "output_name": "is_collection",
+  "fields": {
+    "inputs": {
+      "readme": {"type": "str", "desc": "Project README markdown", "values": null, "backing": null},
+      "stars": {"type": "int", "desc": "GitHub star count", "values": null, "backing": null}
+    },
+    "output": {"type": "enum", "desc": "Curated collection vs organic project", "values": ["yes", "no"], "backing": null}
+  }
+}

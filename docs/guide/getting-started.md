@@ -4,9 +4,17 @@ _Online: <https://thekevinscott.github.io/coaxer/guide/getting-started/>_
 
 ## Installation
 
-```bash
-uv add coaxer
-```
+=== "Python"
+
+    ```bash
+    uv add coaxer
+    ```
+
+=== "TypeScript"
+
+    ```bash
+    npm install coaxer
+    ```
 
 ## Label your examples
 
@@ -65,54 +73,90 @@ Without a schema, field names and types are inferred from the first record.
 coax labels/repo-classification --out prompts/repo-classification
 ```
 
-This writes four artifacts:
-
-| File | Purpose |
-|---|---|
-| `prompt.jinja` | The prompt template with `{{ field }}` slots. |
-| `meta.json` | `compiled_at`, `example_count`, `label_hash`, schema snapshot. |
-| `dspy.json` | DSPy program state (only when `--optimizer gepa`). |
-| `history.jsonl` | One line per compile. |
-
 The default optimizer is `none` -- it emits a schema-derived template without calling any LLM. Pass `--optimizer gepa` to run DSPy 3's GEPA pass, which requires an LLM credential (default: `AgentLM` / Claude Code).
 
 ## Consume the prompt
 
-`CoaxedPrompt` is a `str` subclass. The raw Jinja template is what `str(p)` returns, so the object drops in anywhere a string is accepted. `p(**vars)` renders it.
+`CoaxedPrompt` loads the compiled template and renders it on call. Missing variables raise `MissingVariableError`. Bind defaults at construction; call-time vars override.
 
-```python
-from coaxer import CoaxedPrompt
+=== "Python"
 
-p = CoaxedPrompt("prompts/repo-classification")
-filled = p(
-    readme="# awesome-skills\n\n500+ curated Claude skills",
-    description="A curated list of awesome Claude skills",
-    stars=521,
-)
-```
+    `CoaxedPrompt` is a `str` subclass — the raw template is what `str(p)` returns, so the object drops in anywhere a string is accepted. `p(**vars)` renders it.
 
-Missing variables raise `UndefinedError` (Jinja2 `StrictUndefined`). Bind defaults at construction time and override at call time:
+    ```python
+    from coaxer import CoaxedPrompt
 
-```python
-p = CoaxedPrompt("prompts/repo-classification", role="classifier")
-filled = p(role="summarizer", readme=..., stars=...)  # call-time wins
-```
+    p = CoaxedPrompt("prompts/repo-classification")
+    filled = p(
+        readme="# awesome-skills\n\n500+ curated Claude skills",
+        description="A curated list of awesome Claude skills",
+        stars=521,
+    )
+    ```
+
+    Bind defaults at construction time and override at call time:
+
+    ```python
+    p = CoaxedPrompt("prompts/repo-classification", role="classifier")
+    filled = p(role="summarizer", readme=..., stars=...)  # call-time wins
+    ```
+
+=== "TypeScript"
+
+    `new CoaxedPrompt(path, bound?)` reads the artifact. The instance is callable; `` `${p}` `` returns the raw template; `p({...})` renders it.
+
+    ```ts
+    import { CoaxedPrompt } from "coaxer";
+
+    const p = new CoaxedPrompt("prompts/repo-classification");
+    const filled = p({
+      readme: "# awesome-skills\n\n500+ curated Claude skills",
+      description: "A curated list of awesome Claude skills",
+      stars: 521,
+    });
+    ```
+
+    Bind defaults at construction time and override at call time:
+
+    ```ts
+    const p = new CoaxedPrompt("prompts/repo-classification", { role: "classifier" });
+    const filled = p({ role: "summarizer", readme, stars });  // call-time wins
+    ```
 
 ## Optional: structured output
 
-`p.response_format` is a Pydantic model class derived from the compiled output schema.
+A schema for the compiled output, ready to hand to OpenAI's `.parse()` or Anthropic's tool-use.
 
-```python
-from openai import OpenAI
+=== "Python"
 
-client = OpenAI()
-resp = client.chat.completions.parse(
-    model="gpt-4o",
-    messages=[{"role": "user", "content": p(readme=..., stars=...)}],
-    response_format=p.response_format,
-)
-print(resp.choices[0].message.parsed.is_collection)
-```
+    `p.response_format` is a Pydantic model class.
+
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI()
+    resp = client.chat.completions.parse(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": p(readme=..., stars=...)}],
+        response_format=p.response_format,
+    )
+    print(resp.choices[0].message.parsed.is_collection)
+    ```
+
+=== "TypeScript"
+
+    `p.responseFormat()` returns a Zod schema.
+
+    ```ts
+    import { zodResponseFormat } from "openai/helpers/zod";
+
+    const resp = await openai.chat.completions.parse({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: `${p({ readme, stars })}` }],
+      response_format: zodResponseFormat(p.responseFormat(), "Output"),
+    });
+    console.log(resp.choices[0].message.parsed.is_collection);
+    ```
 
 ## Optional: back the compile step with a specific LLM
 
@@ -134,6 +178,5 @@ coax labels/... --out prompts/... --optimizer gepa
 
 - Python >= 3.14
 - DSPy >= 3.0 (for GEPA)
-- Jinja2 >= 3.0
 - For `AgentLM`: Claude Code CLI installed and authenticated
 - For `OpenAILM`: an OpenAI-compatible endpoint

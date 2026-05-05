@@ -6,13 +6,13 @@ Full coaxer documentation on a single page, designed for consumption by language
 
 ## What is coaxer?
 
-Coaxer turns labeled examples into prompts. You label behavior you want, coaxer compiles it into a `prompt.jinja` template, you consume the template as a string at runtime.
+Coaxer turns labeled examples into prompts. You label behavior you want, coaxer compiles it into a prompt artifact, you consume the rendered template as a string at runtime.
 
 The library provides:
 
 1. **Label folder format** — one directory per record; `record.json` + sibling files for text/binary.
 2. **`coax` CLI** — reads the folder, optionally runs DSPy 3 + GEPA optimization, writes a prompt artifact.
-3. **`CoaxedPrompt`** — a `str` subclass that loads `prompt.jinja` and renders it via Jinja2 at call time.
+3. **`CoaxedPrompt`** — a `str` subclass that loads the compiled artifact and renders it at call time.
 4. **`AgentLM` / `OpenAILM`** — DSPy `BaseLM` backends for the optional compile-time optimizer (Claude via Agent SDK, or any OpenAI-compatible endpoint).
 
 The prompt is a build artifact. Labeled examples are the source of truth.
@@ -23,7 +23,7 @@ The prompt is a build artifact. Labeled examples are the source of truth.
 uv add coaxer
 ```
 
-Requirements: Python >= 3.14, DSPy >= 3.0, Jinja2 >= 3.0. `AgentLM` additionally requires the Claude Code CLI installed and authenticated.
+Requirements: Python >= 3.14, DSPy >= 3.0. `AgentLM` additionally requires the Claude Code CLI installed and authenticated.
 
 ## Label folder format
 
@@ -81,17 +81,10 @@ coax <labels-dir> --out <prompts-dir> [--optimizer {none,gepa}] [--output-name N
 
 - `<labels-dir>` — path to the label folder.
 - `--out` — output folder (created if missing).
-- `--optimizer` — `none` (default) emits schema-derived template with no network. `gepa` runs DSPy 3 GEPA, requires an LLM credential, writes `dspy.json`.
+- `--optimizer` — `none` (default) emits schema-derived template with no network. `gepa` runs DSPy 3 GEPA, requires an LLM credential.
 - `--output-name` — name of the predicted output field in the rendered template (default `output`).
 
-Writes:
-
-| File | When | Content |
-|---|---|---|
-| `prompt.jinja` | Always | Jinja2 template with `{{ field }}` slots. |
-| `meta.json` | Always | `compiled_at`, `optimizer`, `example_count`, `label_hash`, schema. |
-| `dspy.json` | `--optimizer gepa` | DSPy program state. |
-| `history.jsonl` | Always | One line per compile. |
+The output folder is the prompt artifact — load it with `CoaxedPrompt`; don't reach into it directly.
 
 ## `CoaxedPrompt`
 
@@ -102,10 +95,11 @@ p = CoaxedPrompt("prompts/repo-classification", role="classifier")
 filled = p(readme=new_readme, stars=1200)
 ```
 
-- `CoaxedPrompt(path, **bound)` — str subclass. `__new__` reads `prompt.jinja`. `**bound` sets default variables.
+- `CoaxedPrompt(path, **bound)` — str subclass. Reads the template at construction. `**bound` sets default variables.
 - `str(p)` — raw template.
-- `p(**vars)` — Jinja2 `StrictUndefined` render. Missing vars raise `UndefinedError`. Call-time vars override bound defaults.
-- `p.response_format` — Pydantic model class derived from `meta.json`'s `fields.output`. Cached after first access.
+- `p(**vars)` — render with merged variables. Missing vars raise `MissingVariableError`. Call-time vars override bound defaults.
+- `p.fields` — input variables the template expects (parsed from the template, cached).
+- `p.response_format` — Pydantic model class for the compiled output schema. Cached after first access.
 
 Because `CoaxedPrompt` is a `str`, it drops into any API that accepts a string.
 

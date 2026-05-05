@@ -13,7 +13,8 @@ Labels are the source of truth. The prompt is a build artifact.
 ## Install
 
 ```bash
-uv add coaxer
+uv add coaxer        # Python
+npm install coaxer   # TypeScript
 ```
 
 ## Quick start
@@ -29,15 +30,17 @@ p = CoaxedPrompt("prompts/repo-classification")
 filled = p(readme=new_readme, stars=1200)
 ```
 
+The TypeScript version is in [`docs/guide/getting-started.md`](docs/guide/getting-started.md).
+
 ## Getting Started
 
-Label folder is one directory per record; `record.json` plus sibling files for large text or binary inputs. `coax` compiles the folder into `prompt.jinja` + `meta.json` (+ `dspy.json` when `--optimizer gepa`) + `history.jsonl`. Default optimizer is `none` (schema-derived, no network).
+Label folder is one directory per record; `record.json` plus sibling files for large text or binary inputs. `coax` compiles the folder into a prompt artifact you load with `CoaxedPrompt`. Default optimizer is `none` (schema-derived, no network).
 
 Full walkthrough: [`docs/guide/getting-started.md`](docs/guide/getting-started.md).
 
 ## CoaxedPrompt
 
-`CoaxedPrompt(path, **bound)` is a `str` subclass. `str(p)` is the raw Jinja template; `p(**vars)` renders it (Jinja2 `StrictUndefined` — missing vars raise). Bound defaults at construction; call-time vars override.
+`CoaxedPrompt(path, **bound)` is a `str` subclass. `str(p)` is the raw template; `p(**vars)` renders it. Missing vars raise `MissingVariableError`. Bound defaults at construction; call-time vars override. `p.fields` lists the input variables the template expects.
 
 For structured-output APIs, `p.response_format` is a Pydantic model derived from the compiled output schema.
 

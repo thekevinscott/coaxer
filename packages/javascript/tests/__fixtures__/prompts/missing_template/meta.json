@@ -1,0 +1,3 @@
+{
+  "note": "fixture for the missing-template error path; intentionally has no prompt.jinja"
+}
