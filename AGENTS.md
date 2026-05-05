@@ -110,7 +110,7 @@ Changes to any of these require the full 5-section template. Anything else takes
 2. Minimal implementation to pass (GREEN)
 3. Refactor if needed
 
-TDD Order: integration tests first, then unit tests.
+**TDD order: e2e + integration first (both red), then unit.** Every PR that ships a behavioral change lands its e2e tests *and* its integration tests in the same change, both starting RED, and both expected to be GREEN by the time the PR is ready. Unit tests follow once the outer rings are green and the design has settled. Integration without e2e — or e2e without integration — is incomplete: the integration ring proves the wiring; the e2e ring proves it works against a real provider.
 
 ### Coverage policy
 

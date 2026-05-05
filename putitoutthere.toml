@@ -1,6 +1,8 @@
 [putitoutthere]
 version = 1
 
+# PyPI: the Python coaxer package. Distill labels into prompts; consume
+# via `from coaxer import CoaxedPrompt`.
 [[package]]
 name = "coaxer"
 kind = "pypi"
@@ -10,3 +12,20 @@ build = "hatch"
 # Override the default `{name}-v{version}` so the planner keeps bumping
 # from the pre-putitoutthere `v0.2.x` tag history.
 tag_format = "v{version}"
+
+# npm: the JavaScript/TypeScript runtime. Same `coaxer` package name on
+# the registry; published from `packages/javascript/`. Pure JS — no
+# native binaries — so `build` is omitted (vanilla npm publish, with a
+# prepack hook in package.json running `tsc` first).
+#
+# Versioning: independent patch bumps via path-filter cascade. For
+# minor / major bumps the trailer should list both packages explicitly
+# (`release: minor [coaxer, coaxer-js]`) so the Python and npm packages
+# release in lockstep at the same version.
+[[package]]
+name  = "coaxer-js"
+npm   = "coaxer"
+kind  = "npm"
+path  = "packages/javascript"
+globs = ["packages/javascript/**"]
+first_version = "0.1.0"

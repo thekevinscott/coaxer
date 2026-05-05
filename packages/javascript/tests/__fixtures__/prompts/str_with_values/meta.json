@@ -1,0 +1,13 @@
+{
+  "compiled_at": "2026-01-15T12:00:00+00:00",
+  "optimizer": null,
+  "example_count": 3,
+  "label_hash": "5757575757575757",
+  "output_name": "category",
+  "fields": {
+    "inputs": {
+      "text": {"type": "str", "desc": "Source text", "values": null, "backing": null}
+    },
+    "output": {"type": "str", "desc": "Category label", "values": ["alpha", "beta", "gamma"], "backing": null}
+  }
+}

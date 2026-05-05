@@ -1,0 +1,13 @@
+{
+  "compiled_at": "2026-01-15T12:00:00+00:00",
+  "optimizer": null,
+  "example_count": 5,
+  "label_hash": "deadbeefcafef00d",
+  "output_name": "is_positive",
+  "fields": {
+    "inputs": {
+      "text": {"type": "str", "desc": "User-provided text", "values": null, "backing": null}
+    },
+    "output": {"type": "bool", "desc": "True if positive sentiment", "values": null, "backing": null}
+  }
+}

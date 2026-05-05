@@ -39,6 +39,54 @@ No migration required.
 
 ---
 
+## Unreleased — AGENTS.md TDD order: e2e + integration together, both red
+
+No migration required.
+
+---
+
+## Unreleased — TypeScript runtime previewed in docs
+
+No migration required.
+
+---
+
+## Unreleased — `packages/javascript/` JavaScript/TypeScript runtime
+
+No migration required.
+
+---
+
+## Unreleased — `Test (JS)` workflow with diff-cover gate
+
+No migration required.
+
+---
+
+## Unreleased — JS test workflow split into Unit / Integration / Coverage checks
+
+No migration required.
+
+---
+
+## Unreleased — JS package wired into putitoutthere release
+
+No migration required.
+
+---
+
+## Unreleased — one-shot `bootstrap-npm.yml` for first npm publish
+
+No migration required.
+
+---
+
+## Unreleased — JS CI parity: `Type Check (JS)`, `Lint (JS)`, `Build (JS)`
+
+No migration required.
+
+---
+
 ## Unreleased — `CoaxedPrompt.response_format`
 
 ### (a) Summary

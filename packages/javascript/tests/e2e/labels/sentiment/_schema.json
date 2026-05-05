@@ -1,0 +1,10 @@
+{
+  "inputs": {
+    "text": {"desc": "User-provided text", "type": "str"}
+  },
+  "output": {
+    "desc": "Sentiment of the text",
+    "type": "enum",
+    "values": ["positive", "negative", "neutral"]
+  }
+}

@@ -1,0 +1,96 @@
+name: Test (JS)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    name: Test Unit (JS)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/javascript
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'packages/javascript/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+  integration:
+    name: Test Integration (JS)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/javascript
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'packages/javascript/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+  coverage:
+    name: Coverage (JS)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/javascript
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Full history so `diff-cover` can compute a diff vs. the base ref.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'packages/javascript/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run all tests with coverage
+        run: npm run test:cov
+
+      - name: Install diff-cover
+        if: github.event_name == 'pull_request'
+        run: pipx install 'diff-cover>=9.0'
+
+      - name: Rewrite lcov paths to repo-relative
+        if: github.event_name == 'pull_request'
+        working-directory: ${{ github.workspace }}
+        # vitest emits SF: lines as `src/...` (relative to packages/javascript/);
+        # diff-cover compares against git paths, which are repo-relative.
+        run: sed -i 's|^SF:|SF:packages/javascript/|' packages/javascript/coverage/lcov.info
+
+      - name: Enforce 95% coverage on changed lines
+        if: github.event_name == 'pull_request'
+        working-directory: ${{ github.workspace }}
+        run: |
+          git fetch --no-tags --prune origin "${{ github.base_ref }}"
+          diff-cover packages/javascript/coverage/lcov.info \
+            --compare-branch="origin/${{ github.base_ref }}" \
+            --fail-under=95 \
+            --show-uncovered \
+            --include-untracked
