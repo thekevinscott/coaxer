@@ -1,5 +1,7 @@
 """Label examples, derive prompts.
 
+Evals-first prompt optimization.
+
 Compile a label folder into a reusable prompt::
 
     coax labels/repo-classification --out prompts/repo-classification
