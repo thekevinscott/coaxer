@@ -39,6 +39,12 @@ No migration required.
 
 ---
 
+## Unreleased — remove `bootstrap-npm.yml`; add JS package README
+
+No migration required.
+
+---
+
 ## Unreleased — AGENTS.md TDD order: e2e + integration together, both red
 
 No migration required.

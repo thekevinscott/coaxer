@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Added
+- **`packages/javascript/README.md`** — what npmjs.com displays for the `coaxer` npm package. Mirrors the Python README's shape (Install / Quick start / `CoaxedPrompt` / Structured output) and points at the docs site. Previously the `files` array in `package.json` listed `README.md` but the file didn't exist, so the npm page rendered without one. (#70)
+
+### Removed
+- **`.github/workflows/bootstrap-npm.yml`** — the one-shot workflow that published `coaxer@0.1.0` so an OIDC trusted publisher could be registered against it. Now that `coaxer` exists on npm, the TP is registered, and `NPM_TOKEN` has been removed from the repo, the bootstrap is dead code. Future releases publish through `release.yml` → putitoutthere → npm via OIDC. This same PR doubles as the first stress test of that path: it touches `packages/javascript/**`, so the `coaxer-js` package cascades and a `release: patch [coaxer-js]` trailer drives the OIDC publish. (#70)
+
 ### Changed
 - **CI: split the Python `Test` workflow into three separate checks — `Test Unit`, `Test Integration`, and `Coverage`.** `test.yml` previously bundled unit + integration runs and the `diff-cover` gate behind a single `test` check, so a failure required opening logs to tell which ring fired. The new layout runs `pytest coaxer/` in `Test Unit`, `pytest tests/integration/` in `Test Integration`, and the full coverage + `diff-cover --fail-under=100` pass in `Coverage` — each fails for one reason only. Mirrors the JS-side structure tracked in #57. Bumping the project-wide `--fail-under` floor stays out of scope (tracked in #66); E2E remains agent-run, not CI. (#68) See [MIGRATIONS.md](MIGRATIONS.md#unreleased--ci-split-python-test-workflow).
 - **AGENTS.md: TDD order now mandates e2e + integration tests in the same PR, both starting RED.** Replaces the previous "integration tests first, then unit tests" wording. The new rule: every behavioral change ships its e2e *and* integration tests together; both start red, both must end green before the PR is ready; unit tests follow once the design has settled. Integration without e2e (or vice versa) is treated as incomplete — the integration ring proves the wiring; the e2e ring proves it against a real provider.
