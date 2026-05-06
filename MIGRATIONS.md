@@ -33,6 +33,18 @@ skipped a step).
 
 ---
 
+## Unreleased — red-first PR workflow
+
+No migration required.
+
+---
+
+## Unreleased — red tests for run_sync event-loop lifecycle (#73)
+
+No migration required.
+
+---
+
 ## Unreleased — CI split Python test workflow
 
 No migration required.

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Added
+- **Red integration + e2e tests for `run_sync` event-loop lifecycle (#73).** `tests/integration/run_sync_event_loop_test.py` asserts the contract the fix must satisfy: `run_sync` reuses one event loop across calls and never closes it between calls. `tests/e2e/cli/forward_no_stderr_noise_test.py` drives `AgentLM.forward()` in a tight loop and asserts stderr stays free of `Attempted to exit cancel scope`, `Task exception was never retrieved`, and `Loop <...> is closed` tracebacks. Both tests start RED on this commit; the fix lands in a follow-up commit on the same PR per the new red-first workflow in AGENTS.md.
+
+### Changed
+- **AGENTS.md: red-first PR workflow is now mandatory for behavioral changes.** Test commits land before source commits in the same branch, and the PR is opened with the integration tests in their RED state — the `Test Integration` CI job must show a failing run on the test-only commits before any source change is pushed. The audit trail (one failing CI run, then one passing) is the proof that the new tests genuinely cover the bug. See [MIGRATIONS.md](MIGRATIONS.md#unreleased--red-first-pr-workflow).
+
 ### Fixed
 - **`packages/javascript/package.json`: add `repository`, `homepage`, `bugs`, `keywords`, `author` fields.** putitoutthere publishes with `npm publish --provenance`, which requires a `repository` field so npm can verify the package's source matches the trusted publisher. Without it, the first OIDC release attempt failed with `npm publish --provenance requires a \`repository\` field in package.json` (release run #45). This is the fix; while the file was open, also added the standard npm metadata fields so the npmjs.com page renders the homepage, issue tracker, and search keywords. (#71 follow-up)
 
