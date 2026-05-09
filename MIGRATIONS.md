@@ -51,6 +51,12 @@ No migration required.
 
 ---
 
+## Unreleased — gepa-metric-red-tests
+
+No migration required.
+
+---
+
 ## Unreleased — red tests for run_sync event-loop lifecycle (#73)
 
 No migration required.

@@ -13,6 +13,7 @@ file-backed inputs.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -68,6 +69,72 @@ def describe_distill():
             enum_values = meta["fields"]["output"]["values"]
             assert any(v.lower() in text for v in enum_values), (
                 f"expected response to contain one of {enum_values}, got: {text!r}"
+            )
+
+    def describe_with_gepa_on_json_output():
+        def it_emits_nonzero_score_signal(
+            make_label_folder: Callable[..., Path],
+            tmp_path: Path,
+        ) -> None:
+            """Regression for #75. With JSON-shaped gold outputs, the
+            byte-exact default metric returns 0.0 for every prediction —
+            the LM never produces output with the exact whitespace and key
+            order the gold uses, so GEPA gets no signal.
+
+            Contract: at least one of the per-candidate scores GEPA prints
+            during compile must be ``> 0``. Pre-fix, every score in stdout
+            is ``0.0``; post-fix, the JSON-aware default scores per-field
+            agreement so semantically-correct predictions register.
+            """
+            labels = make_label_folder(
+                schema={
+                    "inputs": {"text": {"desc": "Short text snippet"}},
+                    "output": {
+                        "desc": (
+                            "JSON object with two boolean keys: "
+                            "'positive' (text expresses positive sentiment) and "
+                            "'negative' (text expresses negative sentiment). "
+                            "Output the raw JSON object only — no prose."
+                        ),
+                        "type": "str",
+                    },
+                },
+                records=[
+                    (
+                        "0001",
+                        {"text": "I love this so much, best day ever!"},
+                        '{\n    "positive": true,\n    "negative": false\n}\n',
+                        None,
+                    ),
+                    (
+                        "0002",
+                        {"text": "Worst experience of my life, total disaster."},
+                        '{\n    "positive": false,\n    "negative": true\n}\n',
+                        None,
+                    ),
+                    (
+                        "0003",
+                        {"text": "Absolutely fantastic, highly recommend!"},
+                        '{\n    "positive": true,\n    "negative": false\n}\n',
+                        None,
+                    ),
+                ],
+            )
+            out = tmp_path / "json_gepa_artifact"
+            result = run_coax(str(labels), "--out", str(out), "--optimizer", "gepa")
+
+            haystack = result.stdout + "\n" + result.stderr
+            scores = [
+                float(m)
+                for m in re.findall(r"score[^0-9]*([0-9]+(?:\.[0-9]+)?)", haystack, re.IGNORECASE)
+            ]
+            assert scores, (
+                "expected GEPA to emit at least one score line; "
+                f"stdout/stderr:\n{haystack!r}"
+            )
+            assert any(s > 0 for s in scores), (
+                "GEPA reported only zero scores — the silent-failure case from #75. "
+                f"All scores: {scores}\nstdout/stderr:\n{haystack!r}"
             )
 
     def describe_with_bool_output():

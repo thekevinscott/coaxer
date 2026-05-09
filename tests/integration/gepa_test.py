@@ -193,3 +193,62 @@ def describe_distill_with_gepa():
             captured = _KwargsCapturingOptimizer.captured_kwargs
             assert captured.get("reflection_lm") is reflection_lm
             assert captured.get("reflection_lm") is not main_lm
+
+    def describe_default_metric_handles_structured_output():
+        """Regression for #75: the bundled metric is byte-exact, so JSON
+        outputs that differ only in formatting score ``0.0`` and GEPA gets
+        no signal. The fix: when both gold and pred parse as JSON objects,
+        score per-field agreement; fall back to exact match otherwise.
+        """
+
+        def _capture_metric(tmp_path: Path):
+            out = tmp_path / "out"
+            _MetricCapturingOptimizer.captured_metric = None
+            with (
+                patch("coaxer.lm.run_sync", return_value="true"),
+                patch("dspy.GEPA", _MetricCapturingOptimizer),
+            ):
+                distill(FIXTURE, out, lm=AgentLM(), optimizer="gepa")
+            metric = _MetricCapturingOptimizer.captured_metric
+            assert metric is not None
+            return metric
+
+        class _Obj:
+            def __init__(self, **kwargs: object) -> None:
+                self.__dict__.update(kwargs)
+
+        def it_scores_semantically_equivalent_json_as_one(tmp_path: Path) -> None:
+            """Same JSON object, different whitespace and key order = 1.0."""
+            metric = _capture_metric(tmp_path)
+            gold_pretty = (
+                "{\n"
+                '  "includes_what_it_does": false,\n'
+                '  "includes_when_to_use": false,\n'
+                '  "mentions_file_types": false\n'
+                "}"
+            )
+            pred_compact = (
+                '{"mentions_file_types":false,'
+                '"includes_when_to_use":false,'
+                '"includes_what_it_does":false}'
+            )
+            score = metric(_Obj(output=gold_pretty), _Obj(output=pred_compact))
+            assert score == 1.0, (
+                f"semantically-equivalent JSON should score 1.0, got {score}"
+            )
+
+        def it_gives_partial_credit_on_json_field_disagreement(tmp_path: Path) -> None:
+            """One of two fields wrong = score in (0, 1) so GEPA sees a gradient."""
+            metric = _capture_metric(tmp_path)
+            gold = '{"a": false, "b": false}'
+            pred = '{"a": false, "b": true}'
+            score = metric(_Obj(output=gold), _Obj(output=pred))
+            assert 0.0 < score < 1.0, (
+                f"partial match should score in (0, 1), got {score}"
+            )
+
+        def it_falls_back_to_exact_match_on_non_json(tmp_path: Path) -> None:
+            """Non-JSON outputs (e.g. enum strings) keep exact-match behavior."""
+            metric = _capture_metric(tmp_path)
+            assert metric(_Obj(output="true"), _Obj(output="true")) == 1.0
+            assert metric(_Obj(output="true"), _Obj(output="false")) == 0.0
