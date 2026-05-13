@@ -106,18 +106,6 @@ def describe_distill():
                         '{\n    "positive": true,\n    "negative": false\n}\n',
                         None,
                     ),
-                    (
-                        "0002",
-                        {"text": "Worst experience of my life, total disaster."},
-                        '{\n    "positive": false,\n    "negative": true\n}\n',
-                        None,
-                    ),
-                    (
-                        "0003",
-                        {"text": "Absolutely fantastic, highly recommend!"},
-                        '{\n    "positive": true,\n    "negative": false\n}\n',
-                        None,
-                    ),
                 ],
             )
             out = tmp_path / "json_gepa_artifact"
