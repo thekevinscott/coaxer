@@ -33,6 +33,12 @@ skipped a step).
 
 ---
 
+## Unreleased — red test for `coax` CLI default LM constraints
+
+No migration required.
+
+---
+
 ## Unreleased — try-pr skill
 
 No migration required.
