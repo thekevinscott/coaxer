@@ -21,5 +21,6 @@ def describe_build_default_lm():
             f"expected tools=[] to disable filesystem/agentic tools, got {lm.kwargs.get('tools')!r}"
         )
         assert lm.kwargs.get("max_turns") == 1, (
-            f"expected max_turns=1 for single-shot classification, got {lm.kwargs.get('max_turns')!r}"
+            "expected max_turns=1 for single-shot classification, "
+            f"got {lm.kwargs.get('max_turns')!r}"
         )

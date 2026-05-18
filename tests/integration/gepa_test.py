@@ -248,3 +248,8 @@ def describe_distill_with_gepa():
             metric = _capture_metric(tmp_path)
             assert metric(_Obj(output="true"), _Obj(output="true")) == 1.0
             assert metric(_Obj(output="true"), _Obj(output="false")) == 0.0
+
+        def it_scores_two_empty_objects_as_one(tmp_path: Path) -> None:
+            """Empty JSON objects are vacuously equal -- no keys to disagree on."""
+            metric = _capture_metric(tmp_path)
+            assert metric(_Obj(output="{}"), _Obj(output="{}")) == 1.0

@@ -33,6 +33,12 @@ skipped a step).
 
 ---
 
+## Unreleased — coverage backfill for JSON-aware metric helpers
+
+No migration required.
+
+---
+
 ## Unreleased — red test for `coax` CLI default LM constraints
 
 No migration required.
