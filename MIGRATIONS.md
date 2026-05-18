@@ -33,6 +33,30 @@ skipped a step).
 
 ---
 
+## Unreleased — coverage backfill for JSON-aware metric helpers
+
+No migration required.
+
+---
+
+## Unreleased — red test for `coax` CLI default LM constraints
+
+No migration required.
+
+---
+
+## Unreleased — `coax --optimizer gepa` rollout envelope
+
+No migration required.
+
+---
+
+## Unreleased — JSON-aware default metric for `coax --optimizer gepa`
+
+No migration required.
+
+---
+
 ## Unreleased — try-pr skill
 
 No migration required.
@@ -46,6 +70,12 @@ No migration required.
 ---
 
 ## Unreleased — red-first PR workflow
+
+No migration required.
+
+---
+
+## Unreleased — gepa-metric-red-tests
 
 No migration required.
 

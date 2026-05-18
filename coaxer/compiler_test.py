@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from coaxer.compiler import distill
+from coaxer.compiler import _parse_json_object, distill
 
 FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "__fixtures__" / "labels" / "demo"
 
@@ -95,3 +95,26 @@ def describe_distill():
             distill(FIXTURE, out, optimizer=None, output_name="is_curated")
             meta = json.loads((out / "meta.json").read_text())
             assert meta["output_name"] == "is_curated"
+
+
+def describe_parse_json_object():
+    def it_returns_none_for_non_string_values():
+        # The GEPA metric reads gold/pred via ``getattr(..., None)``; when the
+        # field is missing on the prediction, the value is ``None`` and must
+        # short-circuit to the exact-match fallback rather than blow up.
+        assert _parse_json_object(None) is None
+        assert _parse_json_object(42) is None
+
+    def it_returns_none_for_invalid_json():
+        # Malformed JSON must fall through to exact match, not propagate the
+        # decode error and crash the GEPA optimization loop.
+        assert _parse_json_object("{not json") is None
+
+    def it_returns_none_for_non_object_json():
+        # ``json.loads("true")`` succeeds and yields a bool; only dicts get
+        # the per-key semantic scoring, everything else falls through.
+        assert _parse_json_object("true") is None
+        assert _parse_json_object("[1, 2, 3]") is None
+
+    def it_returns_parsed_dict_for_json_objects():
+        assert _parse_json_object('{"a": 1}') == {"a": 1}
