@@ -33,6 +33,12 @@ skipped a step).
 
 ---
 
+## Unreleased — pr-monitor action owner
+
+No migration required.
+
+---
+
 ## Unreleased — coverage backfill for JSON-aware metric helpers
 
 No migration required.
