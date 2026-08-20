@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Changed
+- **`pr-monitor` now resolves without an owner-rename redirect.** `.github/workflows/pr-monitor.yml` pinned `uses: clankerbot/pr-monitor@v1`, which only resolves because `clankerbot` is a former name of the account that owns the action. A different account has since claimed that name (created 2026-03-21), and an owner-rename redirect loses to a live repo at the new path -- so the day that account creates a repo called `pr-monitor`, this workflow would run their action with our workflow token. Now pinned to `thekevinscott/pr-monitor@v1`. Also drops the `job-name` input, which the current action does not declare; its only input is `github-token`. See [MIGRATIONS.md](MIGRATIONS.md#unreleased--pr-monitor-action-owner).
+
 ### Added
 - **Direct coverage for `_parse_json_object` and the empty-JSON-object metric branch.** `coaxer/compiler_test.py` gains a `describe_parse_json_object` block covering the three early-exit paths (non-string input, malformed JSON, non-dict JSON like `"true"`/`"[1,2,3]"`), and `tests/integration/gepa_test.py` gains `it_scores_two_empty_objects_as_one` for the vacuous-equality branch. Lands the diff under the metric fix at 100% line coverage so the `Coverage` CI gate passes; the metric is exercised end-to-end by the integration cases either way, this is just to satisfy diff-cover on the helper's defensive branches.
 
