@@ -33,6 +33,12 @@ skipped a step).
 
 ---
 
+## Unreleased — pr-monitor gate permissions and timeout
+
+No migration required.
+
+---
+
 ## Unreleased — pr-monitor action owner
 
 No migration required.
