@@ -33,6 +33,12 @@ skipped a step).
 
 ---
 
+## Unreleased — remove CLAUDE.md shim
+
+No migration required.
+
+---
+
 ## Unreleased — pr-monitor gate permissions and timeout
 
 No migration required.
