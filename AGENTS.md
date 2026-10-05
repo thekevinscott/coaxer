@@ -230,3 +230,5 @@ uv run just test-unit     # pytest (colocated tests)
 uv run just ci            # Full CI pipeline
 uv run just build         # Build package
 ```
+
+@notes/session-handoff.md
